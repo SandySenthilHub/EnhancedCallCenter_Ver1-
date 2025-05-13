@@ -14,7 +14,7 @@ const sqlConfig = {
   options: {
     encrypt: true,
     trustServerCertificate: true,
-    port: 1433,
+    port: parseInt(process.env.SQL_PORT || '1433'),
     connectionTimeout: 60000,
     requestTimeout: 60000,
     tdsVersion: '7.3',
@@ -25,20 +25,43 @@ const sqlConfig = {
   connectionRetryInterval: 5000
 };
 
+// Track connection status to avoid excessive retry attempts
+let isConnecting = false;
+let lastConnectionAttempt = 0;
+const CONNECTION_COOLDOWN = 60000; // 1 minute
+
 // Get connection pool
 let pool: sql.ConnectionPool | null = null;
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;
 
 export async function getPool(): Promise<sql.ConnectionPool> {
-  if (!pool) {
-    let retries = 0;
-    let lastError;
+  // If we already have a pool, return it
+  if (pool) {
+    return pool;
+  }
+  
+  // Check if we're already trying to connect or if we tried too recently
+  const now = Date.now();
+  if (isConnecting || (now - lastConnectionAttempt < CONNECTION_COOLDOWN)) {
+    console.log('SQL connection already in progress or attempted recently');
+    throw new Error('SQL connection unavailable');
+  }
+  
+  // Mark that we're starting a connection attempt
+  isConnecting = true;
+  lastConnectionAttempt = now;
+  
+  let retries = 0;
+  let lastError;
 
+  try {
     while (retries < MAX_RETRIES) {
       try {
+        // Try to connect
         pool = await sql.connect(sqlConfig);
         console.log('Connected to Azure SQL Server');
+        isConnecting = false;
         return pool;
       } catch (error) {
         lastError = error;
@@ -54,13 +77,16 @@ export async function getPool(): Promise<sql.ConnectionPool> {
 
     console.error(`Failed to connect to SQL Server after ${MAX_RETRIES} attempts. Using fallback.`);
     throw lastError;
+  } finally {
+    // Mark that we're done connecting regardless of success or failure
+    isConnecting = false;
   }
-  return pool;
 }
 
-// Execute a query with parameters
+// Execute a query with parameters and graceful fallback
 export async function executeQuery<T>(query: string, params: any = {}): Promise<T[]> {
   try {
+    // Try to get a connection pool 
     const pool = await getPool();
     const request = pool.request();
     
@@ -69,16 +95,17 @@ export async function executeQuery<T>(query: string, params: any = {}): Promise<
       request.input(key, value);
     });
     
+    // Execute the query
     const result = await request.query(query);
     return result.recordset as T[];
   } catch (error) {
     console.error('SQL Query Error:', error);
     console.error('Failed Query:', query);
-    console.error('Query Parameters:', JSON.stringify(params, null, 2));
+    console.error('Query Parameters:', params);
     
-    // For now, return empty array instead of throwing,
-    // this allows the application to continue functioning with missing data
-    // rather than completely failing
+    // Return empty array as fallback
+    // This allows the application to continue functioning with missing data
+    // rather than completely failing when SQL Server is unavailable
     return [] as T[];
   }
 }
