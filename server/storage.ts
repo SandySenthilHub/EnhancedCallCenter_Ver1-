@@ -1,4 +1,4 @@
-// Import types, but utilize memory-based implementation due to SQL connection issues
+import { executeQuery, withTenantFilter } from './sqlUtils';
 import {
   User, InsertUser,
   Tenant, InsertTenant,
@@ -674,5 +674,447 @@ export class MemoryStorage implements IStorage {
   }
 }
 
-// Using Memory Storage until Azure SQL connection is fixed
-export const storage = new MemoryStorage();
+export class SQLStorage implements IStorage {
+  // Users
+  async getUsers(tenantId: number): Promise<User[]> {
+    try {
+      return await executeQuery<User>(
+        withTenantFilter('SELECT * FROM Users'),
+        { tenantId }
+      );
+    } catch (error) {
+      console.error('Error retrieving users:', error);
+      return [];
+    }
+  }
+  
+  async getUserById(id: number): Promise<User | undefined> {
+    try {
+      const results = await executeQuery<User>(
+        'SELECT * FROM Users WHERE ID = @id',
+        { id }
+      );
+      return results[0];
+    } catch (error) {
+      console.error('Error retrieving user by ID:', error);
+      return undefined;
+    }
+  }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    try {
+      const results = await executeQuery<User>(
+        'SELECT * FROM Users WHERE Username = @username',
+        { username }
+      );
+      return results[0];
+    } catch (error) {
+      console.error('Error retrieving user by username:', error);
+      return undefined;
+    }
+  }
+  
+  async createUser(user: InsertUser): Promise<User> {
+    const results = await executeQuery<User>(
+      `INSERT INTO Users (Username, DisplayName, Role, TenantID)
+       VALUES (@username, @displayName, @role, @tenantId);
+       SELECT * FROM Users WHERE ID = SCOPE_IDENTITY();`,
+      user
+    );
+    return results[0];
+  }
+  
+  // Tenants
+  async getTenants(): Promise<Tenant[]> {
+    try {
+      return await executeQuery<Tenant>('SELECT * FROM Tenants');
+    } catch (error) {
+      console.error('Error retrieving tenants:', error);
+      return [];
+    }
+  }
+  
+  async getTenantById(id: number): Promise<Tenant | undefined> {
+    try {
+      const results = await executeQuery<Tenant>(
+        'SELECT * FROM Tenants WHERE ID = @id',
+        { id }
+      );
+      return results[0];
+    } catch (error) {
+      console.error('Error retrieving tenant by ID:', error);
+      return undefined;
+    }
+  }
+  
+  async createTenant(tenant: InsertTenant): Promise<Tenant> {
+    const results = await executeQuery<Tenant>(
+      `INSERT INTO Tenants (Name, Code, IsActive)
+       VALUES (@name, @code, @isActive);
+       SELECT * FROM Tenants WHERE ID = SCOPE_IDENTITY();`,
+      tenant
+    );
+    return results[0];
+  }
+  
+  // KPI Categories
+  async getKpiCategories(type: string): Promise<KpiCategory[]> {
+    try {
+      return await executeQuery<KpiCategory>(
+        'SELECT * FROM KpiCategories WHERE Type = @type',
+        { type }
+      );
+    } catch (error) {
+      console.error('Error retrieving KPI categories:', error);
+      return [];
+    }
+  }
+  
+  async getKpiCategoryById(id: number): Promise<KpiCategory | undefined> {
+    try {
+      const results = await executeQuery<KpiCategory>(
+        'SELECT * FROM KpiCategories WHERE ID = @id',
+        { id }
+      );
+      return results[0];
+    } catch (error) {
+      console.error('Error retrieving KPI category by ID:', error);
+      return undefined;
+    }
+  }
+  
+  async createKpiCategory(category: InsertKpiCategory): Promise<KpiCategory> {
+    const results = await executeQuery<KpiCategory>(
+      `INSERT INTO KpiCategories (Name, Type, Priority)
+       VALUES (@name, @type, @priority);
+       SELECT * FROM KpiCategories WHERE ID = SCOPE_IDENTITY();`,
+      category
+    );
+    return results[0];
+  }
+  
+  // KPI Metrics
+  async getKpiMetrics(tenantId: number, categoryId?: number): Promise<KpiMetric[]> {
+    try {
+      let query = withTenantFilter('SELECT * FROM KpiMetrics');
+      const params: any = { tenantId };
+      
+      if (categoryId) {
+        query += ' AND CategoryID = @categoryId';
+        params.categoryId = categoryId;
+      }
+      
+      return await executeQuery<KpiMetric>(query, params);
+    } catch (error) {
+      console.error('Error retrieving KPI metrics:', error);
+      return [];
+    }
+  }
+  
+  async getKpiMetricById(id: number): Promise<KpiMetric | undefined> {
+    try {
+      const results = await executeQuery<KpiMetric>(
+        'SELECT * FROM KpiMetrics WHERE ID = @id',
+        { id }
+      );
+      return results[0];
+    } catch (error) {
+      console.error('Error retrieving KPI metric by ID:', error);
+      return undefined;
+    }
+  }
+  
+  async createKpiMetric(metric: InsertKpiMetric): Promise<KpiMetric> {
+    const results = await executeQuery<KpiMetric>(
+      `INSERT INTO KpiMetrics (TenantID, CategoryID, Name, Value, Target, Threshold, Unit, Trend, TrendValue, Date)
+       VALUES (@tenantId, @categoryId, @name, @value, @target, @threshold, @unit, @trend, @trendValue, @date);
+       SELECT * FROM KpiMetrics WHERE ID = SCOPE_IDENTITY();`,
+      metric
+    );
+    return results[0];
+  }
+  
+  // Dashboard Customizations
+  async getDashboardCustomizations(userId: number, tenantId: number): Promise<DashboardCustomization | undefined> {
+    try {
+      const results = await executeQuery<DashboardCustomization>(
+        'SELECT * FROM DashboardCustomizations WHERE UserID = @userId AND TenantID = @tenantId',
+        { userId, tenantId }
+      );
+      return results[0];
+    } catch (error) {
+      console.error('Error retrieving dashboard customizations:', error);
+      return undefined;
+    }
+  }
+  
+  async createDashboardCustomization(customization: InsertDashboardCustomization): Promise<DashboardCustomization> {
+    const results = await executeQuery<DashboardCustomization>(
+      `INSERT INTO DashboardCustomizations (UserID, TenantID, DashboardConfig, LastUpdated)
+       VALUES (@userId, @tenantId, @dashboardConfig, @lastUpdated);
+       SELECT * FROM DashboardCustomizations WHERE ID = SCOPE_IDENTITY();`,
+      customization
+    );
+    return results[0];
+  }
+  
+  async updateDashboardCustomization(id: number, customization: InsertDashboardCustomization): Promise<DashboardCustomization> {
+    const results = await executeQuery<DashboardCustomization>(
+      `UPDATE DashboardCustomizations
+       SET UserID = @userId, TenantID = @tenantId, DashboardConfig = @dashboardConfig, LastUpdated = @lastUpdated
+       WHERE ID = @id;
+       SELECT * FROM DashboardCustomizations WHERE ID = @id;`,
+      { ...customization, id }
+    );
+    return results[0];
+  }
+  
+  // Calls
+  async getCalls(tenantId: number, startDate?: Date, endDate?: Date): Promise<Call[]> {
+    try {
+      let query = withTenantFilter('SELECT * FROM Calls');
+      const params: any = { tenantId };
+      
+      if (startDate) {
+        query += ' AND StartTime >= @startDate';
+        params.startDate = startDate;
+      }
+      
+      if (endDate) {
+        query += ' AND StartTime <= @endDate';
+        params.endDate = endDate;
+      }
+      
+      return await executeQuery<Call>(query, params);
+    } catch (error) {
+      console.error('Error retrieving calls:', error);
+      return [];
+    }
+  }
+  
+  async getCallById(id: number): Promise<Call | undefined> {
+    try {
+      const results = await executeQuery<Call>(
+        'SELECT * FROM Calls WHERE ID = @id',
+        { id }
+      );
+      return results[0];
+    } catch (error) {
+      console.error('Error retrieving call by ID:', error);
+      return undefined;
+    }
+  }
+  
+  async createCall(call: InsertCall): Promise<Call> {
+    const results = await executeQuery<Call>(
+      `INSERT INTO Calls (TenantID, AgentID, CallType, StartTime, EndTime, Duration, Language, IsCompleted)
+       VALUES (@tenantId, @agentId, @callType, @startTime, @endTime, @duration, @language, @isCompleted);
+       SELECT * FROM Calls WHERE ID = SCOPE_IDENTITY();`,
+      call
+    );
+    return results[0];
+  }
+  
+  // Call Transcriptions
+  async getCallTranscriptions(callId: number): Promise<CallTranscription[]> {
+    try {
+      return await executeQuery<CallTranscription>(
+        'SELECT * FROM CallTranscriptions WHERE CallID = @callId',
+        { callId }
+      );
+    } catch (error) {
+      console.error('Error retrieving call transcriptions:', error);
+      return [];
+    }
+  }
+  
+  async getCallTranscriptionById(id: number): Promise<CallTranscription | undefined> {
+    try {
+      const results = await executeQuery<CallTranscription>(
+        'SELECT * FROM CallTranscriptions WHERE ID = @id',
+        { id }
+      );
+      return results[0];
+    } catch (error) {
+      console.error('Error retrieving call transcription by ID:', error);
+      return undefined;
+    }
+  }
+  
+  async createCallTranscription(transcription: InsertCallTranscription): Promise<CallTranscription> {
+    const results = await executeQuery<CallTranscription>(
+      `INSERT INTO CallTranscriptions (CallID, TranscriptText, SentimentScore, KeyPhrases, Entities, Tone, SpeakerDiarization, Intent)
+       VALUES (@callId, @transcriptText, @sentimentScore, @keyPhrases, @entities, @tone, @speakerDiarization, @intent);
+       SELECT * FROM CallTranscriptions WHERE ID = SCOPE_IDENTITY();`,
+      transcription
+    );
+    return results[0];
+  }
+  
+  // Mobile Transactions
+  async getMobileTransactions(tenantId: number, startDate?: Date, endDate?: Date): Promise<MobileTransaction[]> {
+    try {
+      let query = withTenantFilter('SELECT * FROM MobileTransactions');
+      const params: any = { tenantId };
+      
+      if (startDate) {
+        query += ' AND StartTime >= @startDate';
+        params.startDate = startDate;
+      }
+      
+      if (endDate) {
+        query += ' AND StartTime <= @endDate';
+        params.endDate = endDate;
+      }
+      
+      return await executeQuery<MobileTransaction>(query, params);
+    } catch (error) {
+      console.error('Error retrieving mobile transactions:', error);
+      return [];
+    }
+  }
+  
+  async getMobileTransactionById(id: number): Promise<MobileTransaction | undefined> {
+    try {
+      const results = await executeQuery<MobileTransaction>(
+        'SELECT * FROM MobileTransactions WHERE ID = @id',
+        { id }
+      );
+      return results[0];
+    } catch (error) {
+      console.error('Error retrieving mobile transaction by ID:', error);
+      return undefined;
+    }
+  }
+  
+  async createMobileTransaction(transaction: InsertMobileTransaction): Promise<MobileTransaction> {
+    const results = await executeQuery<MobileTransaction>(
+      `INSERT INTO MobileTransactions (TenantID, UserID, TransactionType, StartTime, EndTime, Amount, Status, DeviceType, SentimentScore, KeyPhrases, Entities)
+       VALUES (@tenantId, @userId, @transactionType, @startTime, @endTime, @amount, @status, @deviceType, @sentimentScore, @keyPhrases, @entities);
+       SELECT * FROM MobileTransactions WHERE ID = SCOPE_IDENTITY();`,
+      transaction
+    );
+    return results[0];
+  }
+  
+  // IVR Interactions
+  async getIvrInteractions(tenantId: number, startDate?: Date, endDate?: Date): Promise<IvrInteraction[]> {
+    try {
+      let query = withTenantFilter('SELECT * FROM IvrInteractions');
+      const params: any = { tenantId };
+      
+      if (startDate) {
+        query += ' AND StartTime >= @startDate';
+        params.startDate = startDate;
+      }
+      
+      if (endDate) {
+        query += ' AND StartTime <= @endDate';
+        params.endDate = endDate;
+      }
+      
+      return await executeQuery<IvrInteraction>(query, params);
+    } catch (error) {
+      console.error('Error retrieving IVR interactions:', error);
+      return [];
+    }
+  }
+  
+  async getIvrInteractionById(id: number): Promise<IvrInteraction | undefined> {
+    try {
+      const results = await executeQuery<IvrInteraction>(
+        'SELECT * FROM IvrInteractions WHERE ID = @id',
+        { id }
+      );
+      return results[0];
+    } catch (error) {
+      console.error('Error retrieving IVR interaction by ID:', error);
+      return undefined;
+    }
+  }
+  
+  async createIvrInteraction(interaction: InsertIvrInteraction): Promise<IvrInteraction> {
+    const results = await executeQuery<IvrInteraction>(
+      `INSERT INTO IvrInteractions (CallID, TenantID, NodeSequence, DropOffNode, InteractionTime, StartTime, Intent)
+       VALUES (@callId, @tenantId, @nodeSequence, @dropOffNode, @interactionTime, @startTime, @intent);
+       SELECT * FROM IvrInteractions WHERE ID = SCOPE_IDENTITY();`,
+      interaction
+    );
+    return results[0];
+  }
+  
+  // Agents
+  async getAgents(tenantId: number): Promise<Agent[]> {
+    try {
+      return await executeQuery<Agent>(
+        withTenantFilter('SELECT * FROM Agents'),
+        { tenantId }
+      );
+    } catch (error) {
+      console.error('Error retrieving agents:', error);
+      return [];
+    }
+  }
+  
+  async getAgentById(id: number): Promise<Agent | undefined> {
+    try {
+      const results = await executeQuery<Agent>(
+        'SELECT * FROM Agents WHERE ID = @id',
+        { id }
+      );
+      return results[0];
+    } catch (error) {
+      console.error('Error retrieving agent by ID:', error);
+      return undefined;
+    }
+  }
+  
+  async createAgent(agent: InsertAgent): Promise<Agent> {
+    const results = await executeQuery<Agent>(
+      `INSERT INTO Agents (TenantID, Name, ShiftID, IsActive)
+       VALUES (@tenantId, @name, @shiftId, @isActive);
+       SELECT * FROM Agents WHERE ID = SCOPE_IDENTITY();`,
+      agent
+    );
+    return results[0];
+  }
+  
+  // Alerts
+  async getAlerts(tenantId: number): Promise<Alert[]> {
+    try {
+      return await executeQuery<Alert>(
+        withTenantFilter('SELECT * FROM Alerts ORDER BY Timestamp DESC'),
+        { tenantId }
+      );
+    } catch (error) {
+      console.error('Error retrieving alerts:', error);
+      return [];
+    }
+  }
+  
+  async getAlertById(id: number): Promise<Alert | undefined> {
+    try {
+      const results = await executeQuery<Alert>(
+        'SELECT * FROM Alerts WHERE ID = @id',
+        { id }
+      );
+      return results[0];
+    } catch (error) {
+      console.error('Error retrieving alert by ID:', error);
+      return undefined;
+    }
+  }
+  
+  async createAlert(alert: InsertAlert): Promise<Alert> {
+    const results = await executeQuery<Alert>(
+      `INSERT INTO Alerts (TenantID, AlertType, Message, Timestamp, Severity, Status)
+       VALUES (@tenantId, @alertType, @message, @timestamp, @severity, @status);
+       SELECT * FROM Alerts WHERE ID = SCOPE_IDENTITY();`,
+      alert
+    );
+    return results[0];
+  }
+}
+
+// Using SQL Storage
+export const storage = new SQLStorage();
