@@ -1,0 +1,56 @@
+Create a web-based, configurable, and personalized dashboard application for a banking channels analytics system, supporting Call Center and Mobile Banking channels, each with 100 KPIs. The KPIs are managed via a separate CRUD screen that stores SQL queries and schema details in a backend database. The dashboard must allow users to customize their dashboard by selecting specific KPIs, arranging widgets, and choosing from multiple professional color themes. The application should be built using React with JSX, Tailwind CSS for styling, and hosted dependencies from cdn.jsdelivr.net. Ensure the solution is responsive, scalable, and integrates seamlessly with the existing KPI management system.
+
+### Requirements:
+1. **Personalized Dashboard**:
+   - Allow users to create and save their own dashboards.
+   - Support drag-and-drop widget placement for KPIs (e.g., charts, tables, or metrics).
+   - Enable users to select KPIs from the 200 available (100 per channel) via a configuration panel.
+   - Persist user configurations in a backend database, linked to user profiles.
+
+2. **KPI Integration**:
+   - Fetch KPI data dynamically using SQL queries stored in the existing CRUD system.
+   - Support various widget types (e.g., line charts, bar charts, pie charts, single-value metrics) based on KPI schema.
+   - Handle real-time or near-real-time data updates for KPIs.
+
+3. **Color Themes**:
+   - Provide at least three professional color themes (e.g., Modern Dark, Light Blue, Neutral Corporate).
+   - Themes should include harmonious color palettes for backgrounds, text, charts, and accents.
+   - Allow users to switch themes via a settings menu, with changes applied instantly and saved to their profile.
+   - Use Tailwind CSS for consistent and responsive styling.
+
+4. **Technical Specifications**:
+   - Build a single-page application using React (via CDN-hosted dependencies: React, ReactDOM, Babel).
+   - Use JSX for component-based development, avoiding React.createElement.
+   - Style with Tailwind CSS (via CDN) for responsive, modern UI.
+   - Avoid `<form>` tags for submissions due to sandbox restrictions; use button-driven events instead.
+   - Use `className` for JSX attributes.
+   - Include reusable React components for widgets, theme switcher, and configuration panel.
+   - Assume a REST API exists for fetching KPI metadata, SQL queries, and data, and for saving user configurations.
+   - Use modern JavaScript (ES6+) and ensure compatibility with all major browsers.
+
+5. **UI/UX**:
+   - Design a clean, intuitive interface with a sidebar for navigation (e.g., Dashboard, KPI Selection, Settings).
+   - Include a grid-based layout for drag-and-drop widget arrangement.
+   - Provide a preview mode for KPI widgets during configuration.
+   - Ensure accessibility (e.g., ARIA labels, keyboard navigation).
+   - Support responsive design for desktop, tablet, and mobile devices.
+
+6. **Sample Color Themes**:
+   - **Modern Dark**: Background (#1F2A44), Primary (#3B82F6), Accent (#10B981), Text (#E5E7EB).
+   - **Light Blue**: Background (#E8F0FE), Primary (#2563EB), Accent (#22D3EE), Text (#1F2937).
+   - **Neutral Corporate**: Background (#F3F4F6), Primary (#4B5563), Accent (#F59E0B), Text (#111827).
+
+7. **Deliverables**:
+   - A single `index.html` file containing the React application, including all scripts and styles.
+   - Reusable React components for KPI widgets, theme switcher, and dashboard layout.
+   - Sample JSON structure for API responses (e.g., KPI metadata, user configurations).
+   - Documentation on how to integrate with the existing CRUD system’s API.
+
+### Success Criteria:
+- Users can create, save, and load personalized dashboards with selected KPIs.
+- The dashboard renders KPI data accurately using SQL queries from the CRUD system.
+- Color themes are visually appealing, consistent, and switchable in real-time.
+- The application is responsive, accessible, and performs well with 200 KPIs.
+- The code is modular, maintainable, and browser-compatible.
+
+Please provide the complete `index.html` file with embedded React components, Tailwind CSS, and sample API integration code. Include comments explaining key components and logic.
