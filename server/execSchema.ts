@@ -1,11 +1,6 @@
 import sql from 'mssql';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-// ES module compatibility
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import * as fs from 'fs';
+import * as path from 'path';
 
 // SQL Server configuration
 const sqlConfig = {
@@ -22,13 +17,16 @@ const sqlConfig = {
   }
 };
 
-async function setupDatabase() {
+// Read SQL schema file contents
+const schemaSQL = fs.readFileSync('./sql/create-schema.sql', 'utf8');
+const rlsSQL = fs.readFileSync('./sql/setup-rls.sql', 'utf8');
+
+async function setupSchema() {
   console.log('Setting up database schema...');
   console.log('Connection Parameters:');
   console.log(`Server: ${sqlConfig.server}`);
   console.log(`Database: ${sqlConfig.database}`);
   console.log(`User: ${sqlConfig.user}`);
-  console.log(`Port: ${sqlConfig.options.port}`);
   
   let pool: sql.ConnectionPool | null = null;
   
@@ -50,23 +48,16 @@ async function setupDatabase() {
     console.log(`Found ${tableCount} of our application tables`);
     
     if (tableCount < 3) {
-      // Read and execute schema creation script
+      // Execute schema creation script
       console.log('Creating database schema...');
-      const schemaPath = path.join(__dirname, 'sql', 'create-schema.sql');
-      console.log(`Reading schema file from ${schemaPath}`);
-      const schemaSQL = fs.readFileSync(schemaPath, 'utf8');
-      
-      console.log('Executing schema creation script...');
+      console.log('Schema SQL length:', schemaSQL.length);
       await pool.request().batch(schemaSQL);
       console.log('Schema created successfully');
       
       // Set up Row-Level Security
-      console.log('Setting up Row-Level Security...');
-      const rlsPath = path.join(__dirname, 'sql', 'setup-rls.sql');
-      console.log(`Reading RLS file from ${rlsPath}`);
-      const rlsSQL = fs.readFileSync(rlsPath, 'utf8');
-      
       try {
+        console.log('Setting up Row-Level Security...');
+        console.log('RLS SQL length:', rlsSQL.length);
         await pool.request().batch(rlsSQL);
         console.log('Row-Level Security set up successfully');
       } catch (rlsError) {
@@ -74,15 +65,19 @@ async function setupDatabase() {
         console.warn(rlsError);
       }
     } else {
-      console.log('Tables already exist, skipping schema creation');
+      console.log('Our tables already exist, skipping schema creation');
     }
     
     // Verify tables were created
-    const tenantResult = await pool.request().query('SELECT COUNT(*) as count FROM Tenants');
-    console.log(`Found ${tenantResult.recordset[0].count} tenants in database`);
-    
-    const userResult = await pool.request().query('SELECT COUNT(*) as count FROM Users');
-    console.log(`Found ${userResult.recordset[0].count} users in database`);
+    try {
+      const tenantResult = await pool.request().query('SELECT COUNT(*) as count FROM Tenants');
+      console.log(`Found ${tenantResult.recordset[0].count} tenants in database`);
+      
+      const userResult = await pool.request().query('SELECT COUNT(*) as count FROM Users');
+      console.log(`Found ${userResult.recordset[0].count} users in database`);
+    } catch (verifyError) {
+      console.error('Error verifying tables:', verifyError);
+    }
     
     console.log('Database setup completed successfully');
   } catch (error) {
@@ -96,7 +91,7 @@ async function setupDatabase() {
 }
 
 // Run the setup
-setupDatabase().catch(err => {
+setupSchema().catch(err => {
   console.error('Fatal error during database setup:', err);
   process.exit(1);
 });
