@@ -23,22 +23,8 @@ import { calculateKpi, getKpiById, getKpisByTypeAndPriority } from "./kpiDefinit
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health Check
-  app.get('/', (req, res) => {
-    const isHtmlRequest = req.headers.accept?.includes('text/html');
-    
-    if (isHtmlRequest) {
-      res.send(`
-        <html>
-          <head><title>API Status</title></head>
-          <body style="font-family: sans-serif; padding: 20px;">
-            <h1>API Status: OK</h1>
-            <p>The API is running. Visit <a href="/api/health">health endpoint</a> for detailed status.</p>
-          </body>
-        </html>
-      `);
-    } else {
-      res.status(200).json({ status: 'ok' });
-    }
+  app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
   });
   
   // Tenants
