@@ -490,14 +490,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const type = req.query.type as 'contact_center' | 'mobile_banking';
       const priority = req.query.priority as 'critical' | 'medium' | 'low' | undefined;
+      const tenantId = Number(req.query.tenantId);
       
       if (!type || (type !== 'contact_center' && type !== 'mobile_banking')) {
         return res.status(400).json({ message: "Invalid or missing type parameter. Must be 'contact_center' or 'mobile_banking'" });
       }
+
+      if (isNaN(tenantId)) {
+        return res.status(400).json({ message: "Invalid tenant ID" });
+      }
       
-      const kpis = getKpisByTypeAndPriority(type, priority);
-      res.json(kpis);
+      const kpis = await storage.getKpiMetrics(tenantId);
+      const filteredKpis = kpis.filter(kpi => 
+        kpi.type === type && (!priority || kpi.priority === priority)
+      );
+      
+      res.json(filteredKpis);
     } catch (error) {
+      console.error('Error fetching KPIs:', error);
       res.status(500).json({ message: "Failed to retrieve KPI definitions" });
     }
   });
