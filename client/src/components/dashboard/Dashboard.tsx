@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDashboard } from '@/contexts/DashboardContext';
 import { useAuth } from '@/contexts/AuthContext';
 import KpiCard from './KpiCard';
@@ -10,15 +10,18 @@ import AgentPerformance from './AgentPerformance';
 import KeyPhrases from './KeyPhrases';
 import Alerts from './Alerts';
 import DashboardEditor from './DashboardEditor';
-import { Loader2 } from 'lucide-react';
+import { CustomizeDashboard } from './CustomizeDashboard';
+import { Loader2, Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface DashboardProps {
   pageType?: 'home' | 'contact-center' | 'mobile-banking' | 'ivr-analytics' | 'cognitive-services';
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ pageType = 'home' }) => {
-  const { dashboardConfig, isEditMode, isConfigLoading } = useDashboard();
+  const { dashboardConfig, isEditMode, isConfigLoading, setDashboardConfig } = useDashboard();
   const { isLoading: isAuthLoading } = useAuth();
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
 
   // Filter widgets based on page type
   const getFilteredWidgets = () => {
@@ -53,9 +56,53 @@ const Dashboard: React.FC<DashboardProps> = ({ pageType = 'home' }) => {
   // Sort widgets by position
   const sortedWidgets = [...filteredWidgets].sort((a, b) => a.position - b.position);
 
+  // Handle saving the dashboard layout
+  const handleSaveDashboardLayout = (widgetIds: string[]) => {
+    // Convert widget IDs to actual widget configurations
+    const widgetMap = {
+      'key-performance': { id: 'kpi-summary', type: 'kpi', title: 'KPI Summary', size: 'full', position: 0 },
+      'call-volume': { id: 'call-volume', type: 'call-volume', title: 'Call Volume Trends', size: 'medium', position: 1 },
+      'sentiment-analysis': { id: 'sentiment', type: 'sentiment-analysis', title: 'Call Sentiment Analysis', size: 'medium', position: 2 },
+      'mobile-banking': { id: 'mobile-metrics', type: 'mobile-banking-metrics', title: 'Mobile Banking Metrics', size: 'medium', position: 3 },
+      'ivr-flow': { id: 'ivr-analysis', type: 'ivr-flow', title: 'IVR Flow Analysis', size: 'large', position: 4 },
+      'agent-performance': { id: 'agent-stats', type: 'agent-performance', title: 'Agent Performance', size: 'large', position: 5 },
+      'key-phrases': { id: 'key-phrases', type: 'key-phrases', title: 'Key Phrases', size: 'medium', position: 6 },
+      'recent-alerts': { id: 'alerts', type: 'alerts', title: 'Recent Alerts', size: 'full', position: 7 }
+    };
+    
+    // Create a new dashboard config with the selected widgets
+    const newWidgets = widgetIds.map((id, index) => ({
+      ...(widgetMap as any)[id],
+      position: index
+    }));
+    
+    setDashboardConfig({
+      ...dashboardConfig,
+      widgets: newWidgets
+    });
+  };
+
   return (
     <>
       <div className="p-4 md:p-8">
+        {/* Dashboard Header with Customize Button */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-semibold text-neutral-800">
+            {pageType === 'home' ? 'Analytics Dashboard' : 
+             pageType === 'contact-center' ? 'Contact Center Analytics' :
+             pageType === 'mobile-banking' ? 'Mobile Banking Analytics' :
+             pageType === 'ivr-analytics' ? 'IVR Analytics' : 'Cognitive Services'}
+          </h1>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsCustomizeOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Settings className="h-4 w-4" />
+            Customize Layout
+          </Button>
+        </div>
+        
         {/* Dashboard Metrics Summary */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <KpiCard 
@@ -68,6 +115,8 @@ const Dashboard: React.FC<DashboardProps> = ({ pageType = 'home' }) => {
             trendValue={5.2}
             progress={75}
             status="error"
+            isGood={false}
+            isCritical={true}
           />
           <KpiCard 
             title="Customer Satisfaction"
@@ -79,6 +128,8 @@ const Dashboard: React.FC<DashboardProps> = ({ pageType = 'home' }) => {
             trendValue={2.1}
             progress={87}
             status="success"
+            isGood={true}
+            isCritical={false}
           />
           <KpiCard 
             title="First Call Resolution"
@@ -90,6 +141,8 @@ const Dashboard: React.FC<DashboardProps> = ({ pageType = 'home' }) => {
             trendValue={1.8}
             progress={78}
             status="success"
+            isGood={true}
+            isCritical={false}
           />
           <KpiCard 
             title="App Transaction Success"
@@ -101,6 +154,8 @@ const Dashboard: React.FC<DashboardProps> = ({ pageType = 'home' }) => {
             trendValue={1.3}
             progress={96}
             status="warning"
+            isGood={false}
+            isCritical={false}
           />
         </div>
         
@@ -140,6 +195,27 @@ const Dashboard: React.FC<DashboardProps> = ({ pageType = 'home' }) => {
       
       {/* Dashboard Editor Modal */}
       {isEditMode && <DashboardEditor />}
+      
+      {/* Customize Dashboard Dialog */}
+      <CustomizeDashboard 
+        isOpen={isCustomizeOpen}
+        onClose={() => setIsCustomizeOpen(false)}
+        onSave={handleSaveDashboardLayout}
+        currentLayout={dashboardConfig.widgets.map(w => {
+          // Map widget types back to widget IDs
+          const typeToIdMap: Record<string, string> = {
+            'kpi': 'key-performance',
+            'call-volume': 'call-volume',
+            'sentiment-analysis': 'sentiment-analysis',
+            'mobile-banking-metrics': 'mobile-banking',
+            'ivr-flow': 'ivr-flow',
+            'agent-performance': 'agent-performance',
+            'key-phrases': 'key-phrases',
+            'alerts': 'recent-alerts'
+          };
+          return typeToIdMap[w.type] || '';
+        }).filter(Boolean)}
+      />
     </>
   );
 };
