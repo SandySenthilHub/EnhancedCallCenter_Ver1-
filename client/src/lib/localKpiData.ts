@@ -126,7 +126,36 @@ export const contactCenterCriticalKpis: KpiDefinition[] = [
     priority: 'critical',
     unit: '%',
     target: 70,
-    threshold: 50
+    threshold: 50,
+    calculation: `
+      SELECT 
+        AVG(sentimentScore) * 100 as average_sentiment
+      FROM 
+        CallTranscriptions
+      WHERE 
+        callId IN (
+          SELECT id FROM Calls 
+          WHERE tenantId = @tenantId 
+          AND startTime BETWEEN @startDate AND @endDate
+        )
+    `,
+    sourceTables: ['Calls', 'CallTranscriptions'],
+    sourceSchema: `
+      -- CallTranscriptions table schema
+      CREATE TABLE CallTranscriptions (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        callId INT NOT NULL,
+        transcriptText NVARCHAR(MAX) NOT NULL,
+        sentimentScore FLOAT,
+        keyPhrases NVARCHAR(MAX),
+        entities NVARCHAR(MAX),
+        language NVARCHAR(10),
+        processingStatus NVARCHAR(20),
+        processingTime DATETIME2,
+        FOREIGN KEY (callId) REFERENCES Calls(id)
+      )
+    `,
+    isRealTime: false
   },
   {
     id: 'cc_agent_occupancy',
@@ -146,7 +175,28 @@ export const contactCenterCriticalKpis: KpiDefinition[] = [
     priority: 'critical',
     unit: '%',
     target: 3,
-    threshold: 7
+    threshold: 7,
+    calculation: `
+      SELECT 
+        (COUNT(CASE WHEN status = 'abandoned' THEN 1 END) * 100.0 / COUNT(*)) as abandon_rate
+      FROM 
+        Calls
+      WHERE 
+        tenantId = @tenantId
+        AND direction = 'inbound'
+        AND startTime BETWEEN @startDate AND @endDate
+    `,
+    sourceTables: ['Calls'],
+    sourceSchema: `
+      -- Additional Calls columns for abandon rate calculation
+      -- status can be 'completed', 'abandoned', 'missed', etc.
+      -- direction can be 'inbound' or 'outbound'
+      
+      ALTER TABLE Calls ADD direction NVARCHAR(10) NOT NULL DEFAULT 'inbound';
+      ALTER TABLE Calls ADD queueTime INT NULL;
+      ALTER TABLE Calls ADD abandonReason NVARCHAR(100) NULL;
+    `,
+    isRealTime: true
   }
 ];
 
@@ -377,7 +427,25 @@ export const mobileBankingCriticalKpis: KpiDefinition[] = [
     priority: 'critical',
     unit: 'transactions',
     target: 100000,
-    threshold: 70000
+    threshold: 70000,
+    calculation: `
+      SELECT 
+        COUNT(*) as transaction_volume
+      FROM 
+        MobileTransactions
+      WHERE 
+        tenantId = @tenantId
+        AND timestamp BETWEEN @startDate AND @endDate
+    `,
+    sourceTables: ['MobileTransactions'],
+    sourceSchema: `
+      -- MobileTransactions extended schema
+      ALTER TABLE MobileTransactions ADD amount DECIMAL(18,2) NULL;
+      ALTER TABLE MobileTransactions ADD currency NVARCHAR(3) NULL;
+      ALTER TABLE MobileTransactions ADD targetAccount NVARCHAR(50) NULL;
+      ALTER TABLE MobileTransactions ADD sourceAccount NVARCHAR(50) NULL;
+    `,
+    isRealTime: true
   },
   {
     id: 'mb_transaction_value',
@@ -387,7 +455,19 @@ export const mobileBankingCriticalKpis: KpiDefinition[] = [
     priority: 'critical',
     unit: 'currency',
     target: 10000000,
-    threshold: 5000000
+    threshold: 5000000,
+    calculation: `
+      SELECT 
+        SUM(amount) as total_transaction_value
+      FROM 
+        MobileTransactions
+      WHERE 
+        tenantId = @tenantId
+        AND status = 'completed'
+        AND timestamp BETWEEN @startDate AND @endDate
+    `,
+    sourceTables: ['MobileTransactions'],
+    isRealTime: true
   },
   {
     id: 'mb_app_crash',

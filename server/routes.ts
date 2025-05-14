@@ -501,8 +501,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const kpis = await storage.getKpiMetrics(tenantId);
+      // Use type assertion since these properties come from the KPI definitions
       const filteredKpis = kpis.filter(kpi => 
-        kpi.type === type && (!priority || kpi.priority === priority)
+        (kpi as any).type === type && (!priority || (kpi as any).priority === priority)
       );
       
       res.json(filteredKpis);
