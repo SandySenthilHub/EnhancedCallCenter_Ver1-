@@ -13,16 +13,13 @@ const sqlConfig = {
   },
   options: {
     encrypt: true,
-    trustServerCertificate: true,
+    trustServerCertificate: false, // Changed to false for Azure SQL
     port: parseInt(process.env.SQL_PORT || '1433'),
-    connectionTimeout: 60000,
-    requestTimeout: 60000,
-    tdsVersion: '7.3',
+    connectionTimeout: 30000, // Reduced timeout
+    requestTimeout: 30000, // Reduced timeout
     enableArithAbort: true,
-    connectTimeout: 60000
-  },
-  connectionRetryCount: 5,
-  connectionRetryInterval: 5000
+    connectTimeout: 30000 // Reduced timeout
+  }
 };
 
 // Track connection status to avoid excessive retry attempts

@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { queryClient } from '../lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface KPI {
   id: string;
@@ -41,70 +42,28 @@ interface KPI {
 const KpiDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'contact_center' | 'mobile_banking'>('contact_center');
   const [priority, setPriority] = useState<'critical' | 'medium' | 'low' | 'all'>('critical');
-  const [tenantId, setTenantId] = useState<number>(1); // Default to tenant ID 1
+  const { currentTenant } = useAuth();
+  const tenantId = currentTenant?.id || 1;
 
-  // Fetch KPI definitions
-  const { data: kpiDefinitions, isLoading: definitionsLoading } = useQuery({
-    queryKey: ['kpi-definitions', activeTab, priority],
-    queryFn: async () => {
-      const url = `/api/kpi-definitions?type=${activeTab}${priority !== 'all' ? `&priority=${priority}` : ''}`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch KPI definitions');
-      return response.json();
-    }
-  });
+  // Import local KPI data
+  const { getKpisByTypeAndPriority, generateKpiValues } = require('../lib/localKpiData');
 
-  // Only fetch calculations for critical KPIs to avoid performance issues
-  const { data: kpiCalculations, isLoading: calculationsLoading } = useQuery({
-    queryKey: ['kpi-calculations', activeTab, priority, tenantId],
-    queryFn: async () => {
-      if (!kpiDefinitions || kpiDefinitions.length === 0) return [];
-      
-      // Only take first 10 KPIs for performance
-      const kpiIds = kpiDefinitions.slice(0, 10).map((kpi: any) => kpi.id);
-      
-      const response = await fetch('/api/kpi-calculations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tenantId,
-          kpiIds,
-          startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Last 24 hours
-          endDate: new Date().toISOString()
-        })
-      });
-      
-      if (!response.ok) throw new Error('Failed to fetch KPI calculations');
-      return response.json();
-    },
-    enabled: !!kpiDefinitions && kpiDefinitions.length > 0
-  });
+  // Get KPI definitions from local data
+  const kpiDefinitions = React.useMemo(() => {
+    return getKpisByTypeAndPriority(
+      activeTab, 
+      priority !== 'all' ? priority : undefined
+    );
+  }, [activeTab, priority]);
 
-  // Combine definitions with calculations
+  // Generate KPI values based on tenant ID
   const kpis: KPI[] = React.useMemo(() => {
     if (!kpiDefinitions) return [];
-    
-    return kpiDefinitions.slice(0, 10).map((def: any) => {
-      const calculation = kpiCalculations?.find((calc: any) => calc.id === def.id);
-      return {
-        ...def,
-        value: calculation?.value || 0,
-        timestamp: calculation?.timestamp
-      };
-    });
-  }, [kpiDefinitions, kpiCalculations]);
+    return generateKpiValues(tenantId, kpiDefinitions.slice(0, 12));
+  }, [kpiDefinitions, tenantId]);
 
   // Create grid of KPI cards
   const renderKpiGrid = () => {
-    if (definitionsLoading || calculationsLoading) {
-      return (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <span className="ml-2">Loading KPIs...</span>
-        </div>
-      );
-    }
-
     if (!kpis || kpis.length === 0) {
       return (
         <div className="flex items-center justify-center h-64">
@@ -163,7 +122,11 @@ const KpiDashboard: React.FC = () => {
         <div className="w-full md:w-64">
           <Select 
             value={tenantId.toString()} 
-            onValueChange={(value) => setTenantId(parseInt(value))}
+            onValueChange={(value) => {
+              // Tenant selection is now managed by the AuthContext
+              const tenant = { id: parseInt(value), name: value === '1' ? 'X Bank' : 'Y Bank' };
+              useAuth().setCurrentTenant(tenant as any);
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select Tenant" />
