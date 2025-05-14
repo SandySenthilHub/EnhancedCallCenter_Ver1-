@@ -22,6 +22,11 @@ import { detectSpeakers, isDeepgramConfigured, transcribeAudioWithDeepgram } fro
 import { calculateKpi, getKpiById, getKpisByTypeAndPriority } from "./kpiDefinitions";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health Check
+  app.get('/', (_req, res) => {
+    res.status(200).json({ status: 'ok' });
+  });
+  
   // Tenants
   app.get('/api/tenants', async (req, res) => {
     try {
