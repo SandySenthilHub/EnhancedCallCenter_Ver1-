@@ -59,7 +59,8 @@ const KpiDashboard: React.FC = () => {
   // Generate KPI values based on tenant ID
   const kpis: KPI[] = React.useMemo(() => {
     if (!kpiDefinitions) return [];
-    return generateKpiValues(tenantId, kpiDefinitions.slice(0, 12));
+    // Use all KPIs, not just the first 12
+    return generateKpiValues(tenantId, kpiDefinitions);
   }, [kpiDefinitions, tenantId]);
 
   // Create grid of KPI cards

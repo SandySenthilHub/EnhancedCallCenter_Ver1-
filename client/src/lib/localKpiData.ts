@@ -411,7 +411,32 @@ export const mobileBankingMediumKpis: KpiDefinition[] = [
     priority: 'medium',
     unit: '%',
     target: 2,
-    threshold: 5
+    threshold: 5,
+    calculation: `
+      SELECT 
+        (COUNT(CASE WHEN status = 'failed' THEN 1 END) * 100.0 / COUNT(*)) as login_failure_rate
+      FROM 
+        AppSessions
+      WHERE 
+        tenantId = @tenantId
+        AND startTime BETWEEN @startDate AND @endDate
+    `,
+    sourceTables: ['AppSessions'],
+    sourceSchema: `
+      -- AppSessions table schema
+      CREATE TABLE AppSessions (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        tenantId INT NOT NULL,
+        sessionId NVARCHAR(100) NOT NULL,
+        userId NVARCHAR(100) NOT NULL,
+        status NVARCHAR(20) NOT NULL,
+        startTime DATETIME2 NOT NULL,
+        endTime DATETIME2 NULL,
+        duration INT NULL,
+        crashes INT NULL DEFAULT 0
+      )
+    `,
+    isRealTime: true
   },
   {
     id: 'mb_session_per_user',

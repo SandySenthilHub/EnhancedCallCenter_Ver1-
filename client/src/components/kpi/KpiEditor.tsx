@@ -41,7 +41,11 @@ const kpiSchema = z.object({
   priority: z.enum(["critical", "medium", "low"]),
   unit: z.string().min(1, { message: "Unit is required" }),
   target: z.coerce.number().positive({ message: "Target must be a positive number" }),
-  threshold: z.coerce.number().positive({ message: "Threshold must be a positive number" })
+  threshold: z.coerce.number().positive({ message: "Threshold must be a positive number" }),
+  calculation: z.string().optional(),
+  sourceSchema: z.string().optional(),
+  sourceTables: z.array(z.string()).optional(),
+  isRealTime: z.boolean().optional()
 });
 
 type KpiFormValues = z.infer<typeof kpiSchema>;
@@ -87,7 +91,11 @@ const KpiEditor: React.FC<KpiEditorProps> = ({
         priority: kpi.priority,
         unit: kpi.unit,
         target: kpi.target,
-        threshold: kpi.threshold
+        threshold: kpi.threshold,
+        calculation: kpi.calculation || '',
+        sourceSchema: kpi.sourceSchema || '',
+        sourceTables: kpi.sourceTables || [],
+        isRealTime: kpi.isRealTime || false
       });
     } else {
       form.reset({
@@ -98,7 +106,11 @@ const KpiEditor: React.FC<KpiEditorProps> = ({
         priority: 'medium',
         unit: '%',
         target: 0,
-        threshold: 0
+        threshold: 0,
+        calculation: '',
+        sourceSchema: '',
+        sourceTables: [],
+        isRealTime: false
       });
     }
   }, [kpi, kpiType, form]);
@@ -250,7 +262,101 @@ const KpiEditor: React.FC<KpiEditorProps> = ({
               />
             </div>
             
-            <DialogFooter>
+            <h3 className="text-md font-semibold mt-8 mb-4">SQL Schema Information</h3>
+            
+            <FormField
+              control={form.control}
+              name="calculation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>SQL Calculation Query</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      {...field} 
+                      placeholder="SQL query used to calculate this KPI" 
+                      rows={4}
+                      className="font-mono text-xs"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    The SQL query template used to calculate this KPI's value
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="sourceSchema"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Database Schema</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      {...field} 
+                      placeholder="CREATE TABLE statements for related tables" 
+                      rows={4}
+                      className="font-mono text-xs"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Database schema (CREATE TABLE statements) related to this KPI
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="sourceTables"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Source Tables</FormLabel>
+                    <FormControl>
+                      <Input 
+                        value={field.value?.join(', ') || ''} 
+                        onChange={(e) => {
+                          field.onChange(e.target.value.split(',').map(s => s.trim()).filter(Boolean));
+                        }}
+                        placeholder="Table1, Table2, ..."
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Comma-separated list of source tables
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="isRealTime"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-6">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={field.onChange}
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Real-time KPI</FormLabel>
+                      <FormDescription>
+                        Requires near real-time updates
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <DialogFooter className="mt-6">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
