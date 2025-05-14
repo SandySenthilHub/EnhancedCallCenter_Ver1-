@@ -8,7 +8,8 @@ import {
   Network,
   Brain,
   Settings,
-  ChevronDown
+  ChevronDown,
+  LayoutGrid
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
@@ -57,6 +58,12 @@ const Sidebar: React.FC = () => {
           <a className={`flex items-center p-2 rounded-md ${isActive('/cognitive-services') ? 'bg-primary-50 text-primary-600' : 'text-neutral-500 hover:bg-neutral-50'} group`}>
             <Brain className="h-5 w-5" />
             <span className="ml-3 hidden md:block">Cognitive Services</span>
+          </a>
+        </Link>
+        <Link href="/kpi-dashboard">
+          <a className={`flex items-center p-2 rounded-md ${isActive('/kpi-dashboard') ? 'bg-primary-50 text-primary-600' : 'text-neutral-500 hover:bg-neutral-50'} group`}>
+            <LayoutGrid className="h-5 w-5" />
+            <span className="ml-3 hidden md:block">KPI Dashboard</span>
           </a>
         </Link>
         <Link href="/settings">

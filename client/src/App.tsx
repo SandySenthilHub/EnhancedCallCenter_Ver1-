@@ -12,6 +12,7 @@ import MobileBanking from "./pages/MobileBanking";
 import IvrAnalytics from "./pages/IvrAnalytics";
 import CognitiveServices from "./pages/CognitiveServices";
 import Settings from "./pages/Settings";
+import KpiDashboard from "./pages/KpiDashboard";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -23,6 +24,7 @@ function Router() {
       <Route path="/mobile-banking" component={MobileBanking} />
       <Route path="/ivr-analytics" component={IvrAnalytics} />
       <Route path="/cognitive-services" component={CognitiveServices} />
+      <Route path="/kpi-dashboard" component={KpiDashboard} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
