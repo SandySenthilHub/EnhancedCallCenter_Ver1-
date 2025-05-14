@@ -1,0 +1,191 @@
+# Software Requirements Specification (SRS) Prompt for a Configurable, Personalized Banking Dashboard
+
+## Objective
+Develop a web-based, configurable, and personalized dashboard application for a banking channels analytics system, supporting Call Center and Mobile Banking channels, each with 100 KPIs (Key Performance Indicators). The KPIs are managed via an existing CRUD screen that stores SQL queries and schema details in a backend database. The dashboard must allow users to customize their layouts by selecting and arranging KPI widgets (supporting pie charts, bar charts, and line charts for time-series/x-t plots) and choosing from five vibrant, professional color themes. The application will be built as a single-page application using React with JSX, styled with Tailwind CSS, and rely on CDN-hosted dependencies (e.g., cdn.jsdelivr.net). The solution must be responsive, scalable, accessible, and seamlessly integrate with the existing KPI management system.
+
+## 1. Functional Requirements
+
+### 1.1 Personalized Dashboard
+- **User Customization**: Users can create, edit, and save personalized dashboards.
+- **Widget Management**: Support drag-and-drop placement of KPI widgets in a grid-based layout.
+- **KPI Selection**: Allow users to select from 200 KPIs (100 for Call Center, 100 for Mobile Banking) via a configuration panel to populate widgets.
+- **Widget Types**: Support multiple widget types:
+  - Pie charts (for categorical distributions, e.g., call issue types).
+  - Bar charts (for comparisons, e.g., transaction volumes).
+  - Line charts (for time-series/x-t plots, e.g., daily call volumes).
+  - Single-value metrics (for key figures, e.g., total transactions).
+- **Persistence**: Save user dashboard configurations (layout, selected KPIs, widget types) to a backend database, linked to user profiles via a REST API.
+- **Preview Mode**: Provide a preview of KPI widgets during configuration to show sample data rendering.
+
+### 1.2 KPI Integration
+- **Data Fetching**: Dynamically fetch KPI data using SQL queries stored in the existing CRUD system.
+- **Real-Time Updates**: Support real-time or near-real-time data updates for KPIs, refreshing widgets as needed.
+- **Schema Support**: Render widgets based on KPI schema (e.g., data types, categories, time ranges) defined in the CRUD system.
+- **Chart Rendering**: Use a CDN-hosted charting library (e.g., Chart.js) to render pie charts, bar charts, and line charts with customizable colors tied to selected themes.
+
+### 1.3 Color Themes
+- **Theme Options**: Provide five vibrant, professional color themes, each with a cohesive palette for backgrounds, primary colors, accents, and text. Themes are:
+  1. **Vibrant Sunset**:
+     - Background: Soft Coral (#FFF7ED, Tailwind: `bg-orange-50`)
+     - Primary: Deep Orange (#F97316, Tailwind: `bg-orange-500`)
+     - Accent: Bright Pink (#EC4899, Tailwind: `bg-pink-500`)
+     - Text: Charcoal Gray (#1F2937, Tailwind: `text-gray-800`)
+  2. **Tropical Oasis**:
+     - Background: Pale Mint (#ECFDF5, Tailwind: `bg-emerald-50`)
+     - Primary: Teal (#14B8A6, Tailwind: `bg-teal-500`)
+     - Accent: Lime Green (#22C55E, Tailwind: `bg-green-500`)
+     - Text: Deep Slate (#0F172A, Tailwind: `text-slate-900`)
+  3. **Cosmic Galaxy**:
+     - Background: Soft Lavender (#F5F3FF, Tailwind: `bg-purple-50`)
+     - Primary: Royal Purple (#8B5CF6, Tailwind: `bg-purple-500`)
+     - Accent: Electric Blue (#3B82F6, Tailwind: `bg-blue-500`)
+     - Text: Near Black (#111827, Tailwind: `text-gray-900`)
+  4. **Citrus Burst**:
+     - Background: Light Cream (#FEFCE8, Tailwind: `bg-yellow-50`)
+     - Primary: Sunny Yellow (#FACC15, Tailwind: `bg-yellow-400`)
+     - Accent: Tangerine (#FB923C, Tailwind: `bg-orange-400`)
+     - Text: Dark Gray (#1E293B, Tailwind: `text-slate-800`)
+  5. **Berry Bliss**:
+     - Background: Pale Blush (#FDF2F8, Tailwind: `bg-pink-50`)
+     - Primary: Raspberry (#E11D48, Tailwind: `bg-rose-600`)
+     - Accent: Plum (#A855F7, Tailwind: `bg-purple-400`)
+     - Text: Deep Charcoal (#111827, Tailwind: `text-gray-900`)
+- **Theme Switching**: Allow users to switch themes via a settings menu, with changes applied instantly and saved to their profile via the REST API.
+- **Theme Application**: Apply theme colors to:
+  - Dashboard background (e.g., `bg-orange-50` for Vibrant Sunset).
+  - Chart elements (e.g., `backgroundColor: '#F97316'` for bars in Vibrant Sunset).
+  - Widget borders, buttons, and highlights (e.g., `bg-pink-500` for accents).
+  - Text and labels (e.g., `text-gray-800` for readability).
+- **Accessibility**: Ensure themes meet WCAG contrast requirements (e.g., contrast ratio > 4.5:1 for normal text).
+
+### 1.4 User Interface
+- **Navigation**: Include a sidebar for navigation with sections: Dashboard, KPI Selection, Settings (for theme and layout options).
+- **Layout**: Use a responsive grid system for widget placement, supporting drag-and-drop.
+- **Configuration Panel**: Provide a modal or sidebar panel for selecting KPIs and widget types, with search/filter options for the 200 KPIs.
+- **Interactivity**: Support hover effects, tooltips for KPI details, and click-to-edit for widgets.
+- **Responsiveness**: Ensure the UI adapts to desktop, tablet, and mobile devices using Tailwind’s responsive utilities (e.g., `sm:`, `md:`).
+
+## 2. Non-Functional Requirements
+
+### 2.1 Technical Specifications
+- **Framework**: Build a single-page application using React (via CDN-hosted dependencies: React, ReactDOM, Babel).
+- **Styling**: Use Tailwind CSS (via CDN) for responsive, modern styling.
+- **JSX**: Use JSX for component-based development, avoiding React.createElement.
+- **Form Restrictions**: Avoid `<form>` tags due to sandbox restrictions; use button-driven events (e.g., `onClick`) for submissions.
+- **Attributes**: Use `className` instead of `class` for JSX attributes.
+- **Components**: Create reusable React components for:
+  - KPI widgets (pie chart, bar chart, line chart, single-value metric).
+  - Theme switcher (with buttons for each theme and preview).
+  - Dashboard layout (grid with drag-and-drop support).
+  - Configuration panel (for KPI and widget selection).
+- **API Integration**: Assume a REST API exists for:
+  - Fetching KPI metadata, SQL queries, and data.
+  - Saving/retrieving user configurations (layout, theme, widgets).
+  - Sample API endpoints:
+    - `GET /kpis`: Returns list of 200 KPIs with metadata (ID, name, SQL query, schema).
+    - `GET /kpi/:id/data`: Returns data for a specific KPI based on its SQL query.
+    - `POST /user/config`: Saves user dashboard configuration (layout, widgets, theme).
+    - `GET /user/config`: Retrieves user’s saved configuration.
+- **Charting Library**: Use Chart.js (CDN-hosted) for rendering pie charts, bar charts, and line charts, with theme colors applied dynamically.
+- **JavaScript**: Use modern ES6+ syntax, ensuring compatibility with all major browsers (Chrome, Firefox, Safari, Edge).
+
+### 2.2 Performance
+- **Load Time**: Initial dashboard load should take < 2 seconds for 10 widgets.
+- **Data Refresh**: Support real-time updates with minimal latency (< 1 second for API calls).
+- **Scalability**: Handle up to 50 widgets per dashboard without performance degradation.
+- **Error Handling**: Gracefully handle API failures, invalid KPI data, or rendering issues with user-friendly error messages.
+
+### 2.3 Accessibility
+- **Standards**: Comply with WCAG 2.1 Level AA (e.g., ARIA labels, keyboard navigation).
+- **Contrast**: Ensure all text meets contrast requirements across themes.
+- **Navigation**: Support screen readers and keyboard-only navigation for widget configuration and theme switching.
+
+### 2.4 Security
+- **Data Protection**: Ensure API calls use secure HTTPS and authenticate users.
+- **Input Validation**: Sanitize inputs in the configuration panel to prevent injection attacks.
+- **Sandbox Compliance**: Adhere to browser sandbox restrictions (e.g., no `<form>` submissions).
+
+## 3. Deliverables
+- **Code**: A single `index.html` file containing:
+  - React application with all components (widgets, theme switcher, layout, configuration panel).
+  - Tailwind CSS integration via CDN.
+  - Chart.js for chart rendering.
+  - Inline comments explaining key components and logic.
+- **Sample API Specification**:
+  - JSON structure for KPI metadata (e.g., `{ id, name, sqlQuery, schema: { type, categories, timeRange } }`).
+  - JSON structure for user configuration (e.g., `{ userId, theme, widgets: [{ kpiId, type, position }] }`).
+- **Documentation**:
+  - Guide on integrating with the existing CRUD system’s REST API.
+  - Instructions for extending themes or adding new widget types.
+- **Mockup Data**: Sample KPI data for testing (e.g., 5 KPIs with mock data for pie, bar, and line charts).
+
+## 4. Success Criteria
+- Users can create, save, and load personalized dashboards with selected KPIs and widget types (pie charts, bar charts, line charts, single-value metrics).
+- KPI data is accurately fetched and rendered using SQL queries from the CRUD system.
+- Five vibrant themes (Vibrant Sunset, Tropical Oasis, Cosmic Galaxy, Citrus Burst, Berry Bliss) are available, switchable in real-time, and visually consistent across widgets.
+- The application is responsive, accessible, and performs well with up to 200 KPIs and 50 widgets.
+- The code is modular, maintainable, and compatible with all major browsers.
+
+## 5. Assumptions
+- A REST API is available for KPI data and user configuration, with documentation provided separately.
+- The existing CRUD system provides valid SQL queries and schema for all 200 KPIs.
+- Users are authenticated via an external system, and user IDs are passed to the dashboard.
+- CDN-hosted dependencies (React, Tailwind CSS, Chart.js) are accessible and reliable.
+
+## 6. Constraints
+- No local file I/O or network calls beyond the provided REST API.
+- No `<form>` tags due to sandbox restrictions; use event-driven interactions.
+- Themes must be implemented using Tailwind CSS classes, with colors applied dynamically.
+- Chart rendering must rely on Chart.js or a similar CDN-hosted library.
+
+## 7. Sample Theme Switcher Component (Reference)
+Below is a sample React component for theme switching, to guide implementation:
+```jsx
+import React, { useState } from 'react';
+
+const themes = {
+  sunset: { bg: 'bg-orange-50', primary: 'bg-orange-500', accent: 'bg-pink-500', text: 'text-gray-800' },
+  tropical: { bg: 'bg-emerald-50', primary: 'bg-teal-500', accent: 'bg-green-500', text: 'text-slate-900' },
+  cosmic: { bg: 'bg-purple-50', primary: 'bg-purple-500', accent: 'bg-blue-500', text: 'text-gray-900' },
+  citrus: { bg: 'bg-yellow-50', primary: 'bg-yellow-400', accent: 'bg-orange-400', text: 'text-slate-800' },
+  berry: { bg: 'bg-pink-50', primary: 'bg-rose-600', accent: 'bg-purple-400', text: 'text-gray-900' },
+};
+
+function ThemeSwitcher({ onThemeChange }) {
+  const [selectedTheme, setSelectedTheme] = useState('sunset');
+
+  const handleThemeChange = (theme) => {
+    setSelectedTheme(theme);
+    onThemeChange(themes[theme]);
+  };
+
+  return (
+    <div className="p-4">
+      <h3 className="text-lg font-semibold mb-2">Select Theme</h3>
+      <div className="flex gap-2">
+        {Object.keys(themes).map((theme) => (
+          <button
+            key={theme}
+            className={`px-4 py-2 rounded ${themes[theme].primary} text-white ${selectedTheme === theme ? 'ring-2 ring-black' : ''}`}
+            onClick={() => handleThemeChange(theme)}
+          >
+            {theme.charAt(0).toUpperCase() + theme.slice(1)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default ThemeSwitcher;
+```
+- **Integration**: Include in the settings panel. The `onThemeChange` callback updates dashboard classes and saves the selection via the API.
+
+## 8. Development Guidelines
+- **Modularity**: Structure code with reusable components for scalability.
+- **Comments**: Include inline comments for all major components and logic.
+- **Testing**: Test with sample KPI data across all themes and widget types.
+- **Browser Compatibility**: Ensure functionality in Chrome, Firefox, Safari, and Edge.
+- **Version Control**: Provide the `index.html` file as a standalone deliverable, but assume developers will use version control internally.
+
+Please provide the complete `index.html` file with the React application, Tailwind CSS, Chart.js, and sample API integration code. Include detailed comments and ensure the application meets all functional and non-functional requirements outlined above.
