@@ -31,12 +31,9 @@ export function tenantExtractor(req: Request, res: Response, next: NextFunction)
 // Function to set tenant context in SQL Server
 export async function setTenantContext(tenantId: number): Promise<void> {
   try {
-    // Instead of using a stored procedure, we'll set a session variable
-    // This is a fallback for when the stored procedure doesn't exist
-    await executeQuery('SET @currentTenantId = @tenantId', { tenantId }).catch(() => {
-      // If this fails too, we'll just log it but continue - the app will use the tenantId from request
-      console.log(`Could not set session variable. Will use request tenantId for filtering.`);
-    });
+    // Don't try to set SQL variables - just use the request object for tenant filtering
+    // Log that we're using the tenantId from the request object
+    console.log(`Using request tenantId (${tenantId}) for filtering.`);
     console.log(`Tenant context set to ${tenantId}`);
   } catch (error) {
     // Log the error but don't throw it - this allows the application to continue
