@@ -19,10 +19,12 @@ import {
   User, 
   Zap,
   BarChart4,
-  Percent
+  Percent,
+  Database
 } from "lucide-react";
 import DataTable from "@/components/ui/data-table";
 import KpiEditor from "@/components/kpi/KpiEditor";
+import { KpiDetailsList } from "@/components/kpi/KpiDetailsPanel";
 
 const MobileBanking: React.FC = () => {
   const [kpis, setKpis] = useState<any[]>([]);
@@ -249,6 +251,22 @@ const MobileBanking: React.FC = () => {
         onSave={handleSave}
         kpiType="mobile_banking"
       />
+      
+      {/* SQL Schema Information */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5" /> 
+            SQL Schema & Database Information
+          </CardTitle>
+          <CardDescription>
+            Technical details about SQL queries, database schema, and source tables for mobile banking KPIs
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <KpiDetailsList kpis={kpis} />
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -10,9 +10,10 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Minus, Phone, Headphones, Users, Clock, Plus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Phone, Headphones, Users, Clock, Plus, Database } from "lucide-react";
 import DataTable from "@/components/ui/data-table";
 import KpiEditor from "@/components/kpi/KpiEditor";
+import { KpiDetailsList } from "@/components/kpi/KpiDetailsPanel";
 
 const ContactCenter: React.FC = () => {
   const [kpis, setKpis] = useState<any[]>([]);
@@ -218,6 +219,22 @@ const ContactCenter: React.FC = () => {
         onSave={handleSave}
         kpiType="contact_center"
       />
+      
+      {/* SQL Schema Information */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5" /> 
+            SQL Schema & Database Information
+          </CardTitle>
+          <CardDescription>
+            Technical details about SQL queries, database schema, and source tables for each KPI
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <KpiDetailsList kpis={kpis} />
+        </CardContent>
+      </Card>
     </div>
   );
 };
