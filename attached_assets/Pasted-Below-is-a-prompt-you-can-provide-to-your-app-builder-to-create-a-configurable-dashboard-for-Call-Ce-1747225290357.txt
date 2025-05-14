@@ -1,0 +1,53 @@
+Below is a prompt you can provide to your app builder to create a configurable dashboard for Call Center and Mobile Banking Analytics KPIs, with the flexibility to add more analytics in the future. The prompt focuses on dynamic KPI retrieval from a database, user-friendly configuration, and scalability.
+
+---
+
+**Prompt for App Builder:**
+
+I need a configurable dashboard application to display Key Performance Indicators (KPIs) for Call Center and Mobile Banking Analytics, with the ability to add more analytics categories in the future. The KPIs are stored in a database, and from the app’s perspective, KPIs are retrieved using SELECT statements from a table. The app should also allow dynamic addition of new KPIs without requiring code changes. Here are the detailed requirements:
+
+1. **Database Integration:**
+   - The app must connect to a database where KPIs are stored in a table (e.g., `kpi_table`) with columns such as `kpi_name`, `priority`, `description`, `target_value`, `threshold_value`, `current_value`, `status`, and `category` (e.g., "Call Center", "Mobile Banking").
+   - KPIs should be retrieved dynamically using SELECT statements (e.g., `SELECT * FROM kpi_table WHERE category = 'Call Center'`).
+
+2. **Dynamic KPI Management:**
+   - Users should be able to add, edit, or delete KPIs directly through the app’s UI without modifying the codebase.
+   - Provide a form for adding new KPIs, allowing users to input `kpi_name`, `priority` (e.g., Critical, Medium), `description`, `target_value`, `threshold_value`, `current_value`, `status`, and `category`.
+   - Changes should be saved back to the database.
+
+3. **Dashboard Display:**
+   - Display KPIs in a tabular format with columns: KPI Name, Priority, Description, Target, Threshold, Current Value, and Status.
+   - Include a visual indicator for status (e.g., red for "Alert", yellow for "Warning", green for "Good").
+   - Allow filtering by category (e.g., show only Call Center KPIs or Mobile Banking KPIs).
+   - Support pagination if the number of KPIs exceeds a certain limit (e.g., 10 per page).
+
+4. **Configurability:**
+   - Users should be able to configure the dashboard layout, such as choosing which columns to display or reordering them.
+   - Allow users to sort KPIs by any column (e.g., Priority, Current Value).
+   - Provide a search bar to filter KPIs by name or description.
+
+5. **Scalability for Future Analytics:**
+   - Design the app to handle additional analytics categories in the future (e.g., Web Analytics, Customer Support Analytics) without requiring major changes.
+   - Ensure the database schema and app logic are flexible to accommodate new KPI categories.
+
+6. **User Interface:**
+   - The UI should be clean and intuitive, similar to the provided screenshot (a table with KPI details, status indicators, and pagination).
+   - Include a button to “Add New” KPIs, which opens a form for input.
+   - Add action buttons for each KPI row (e.g., Edit, Delete).
+
+7. **Technical Requirements:**
+   - Use a modern web framework (e.g., React, Angular, or Vue.js) for the frontend.
+   - Use a backend framework (e.g., Node.js, Django, or Spring Boot) to handle database interactions and API endpoints.
+   - Provide RESTful APIs for fetching and updating KPIs (e.g., `GET /kpis?category=Call Center`, `POST /kpis` to add a new KPI).
+   - Ensure the app is responsive and works on both desktop and mobile devices.
+
+8. **Sample Data (Based on Screenshot):**
+   - Example KPI: 
+     - KPI Name: "Average Handle Time", Priority: "Critical", Description: "Average duration of a call including talk time and after-call work", Target: "180 seconds", Threshold: "240 seconds", Current Value: "140.69 seconds", Status: "Good", Category: "Call Center".
+     - KPI Name: "Customer Satisfaction", Priority: "Critical", Description: "Average satisfaction score from post-call surveys", Target: "85%", Threshold: "70%", Current Value: "54.34%", Status: "Alert", Category: "Call Center".
+
+Please build this dashboard with a focus on scalability, user-friendliness, and dynamic KPI management. Let me know if you need further clarification!
+
+---
+
+This prompt provides a clear structure for your app builder to create a flexible, database-driven dashboard that meets your current needs and allows for future expansion.
