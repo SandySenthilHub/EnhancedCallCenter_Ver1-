@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface KpiCardProps {
   title: string;
@@ -11,19 +11,38 @@ interface KpiCardProps {
   trendValue: number;
   progress: number;
   status: 'success' | 'warning' | 'error';
+  isGood: boolean;
+  isCritical: boolean;
 }
 
-const KpiCard: React.FC<KpiCardProps> = ({ 
-  title, 
-  value, 
-  unit, 
-  target, 
-  threshold, 
-  trend, 
-  trendValue, 
-  progress, 
-  status 
+const KpiCard: React.FC<KpiCardProps> = ({
+  title,
+  value,
+  unit,
+  target,
+  threshold,
+  trend,
+  trendValue,
+  progress,
+  status,
+  isGood,
+  isCritical
 }) => {
+  let colorClass = 'bg-amber-100/50 border-amber-300 shadow-lg shadow-amber-100/20';
+  let valueColorClass = 'text-amber-700';
+  let icon = <Minus className="h-4 w-4 text-amber-500" />;
+
+  if (isGood) {
+    colorClass = 'bg-emerald-100/50 border-emerald-300 shadow-lg shadow-emerald-100/20';
+    valueColorClass = 'text-emerald-700';
+    icon = <TrendingUp className="h-4 w-4 text-emerald-500" />;
+  } else if (isCritical) {
+    colorClass = 'bg-rose-100/50 border-rose-300 shadow-lg shadow-rose-100/20';
+    valueColorClass = 'text-rose-700';
+    icon = <TrendingDown className="h-4 w-4 text-rose-500" />;
+  }
+
+
   const statusColors = {
     success: 'bg-success',
     warning: 'bg-warning',
@@ -48,7 +67,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
   const trendDisplay = trendColors[trend];
 
   return (
-    <div className="bg-white rounded-lg border border-neutral-100 shadow-sm p-5">
+    <div className={`${colorClass} rounded-lg border shadow-sm p-5`}>
       <div className="flex justify-between items-start mb-2">
         <div className="text-sm font-medium text-neutral-500">{title}</div>
         <div className={`flex items-center text-xs font-medium ${trendDisplay.text}`}>
@@ -57,7 +76,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
         </div>
       </div>
       <div className="flex items-baseline">
-        <span className="text-2xl font-semibold text-neutral-700">{value}</span>
+        <span className={`text-2xl font-semibold ${valueColorClass}`}>{value}</span>
         <span className="ml-2 text-sm text-neutral-400">{unit}</span>
       </div>
       <div className="w-full h-1 bg-neutral-100 rounded-full mt-3 overflow-hidden">
