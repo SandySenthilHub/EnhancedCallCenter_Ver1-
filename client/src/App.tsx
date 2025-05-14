@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { DashboardProvider } from "./contexts/DashboardContext";
 import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
 import Home from "./pages/Home";
@@ -49,16 +50,18 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <TooltipProvider>
-          <div className="flex h-screen overflow-hidden">
-            <Sidebar />
-            <main className="flex-1 overflow-y-auto bg-neutral-50">
-              <Header />
-              <Router />
-            </main>
-          </div>
-          <Toaster />
-        </TooltipProvider>
+        <DashboardProvider>
+          <TooltipProvider>
+            <div className="flex h-screen overflow-hidden">
+              <Sidebar />
+              <main className="flex-1 overflow-y-auto bg-neutral-50">
+                <Header />
+                <Router />
+              </main>
+            </div>
+            <Toaster />
+          </TooltipProvider>
+        </DashboardProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

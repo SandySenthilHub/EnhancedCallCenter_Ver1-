@@ -1,288 +1,273 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { DashboardConfig, DashboardWidget, TimeRange } from '@/lib/types';
-import { useAuth } from './AuthContext';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 
-interface DashboardContextType {
-  dashboardConfig: DashboardConfig;
-  setDashboardConfig: (config: DashboardConfig) => void;
-  saveDashboardConfig: () => Promise<void>;
-  isEditMode: boolean;
-  setIsEditMode: (mode: boolean) => void;
-  timeRange: TimeRange;
-  setTimeRange: (range: TimeRange) => void;
-  startDate: Date | null;
-  setStartDate: (date: Date | null) => void;
-  endDate: Date | null;
-  setEndDate: (date: Date | null) => void;
-  isConfigLoading: boolean;
-  availableWidgets: { type: string; title: string; description: string }[];
-  addWidget: (widgetType: string) => void;
-  removeWidget: (widgetId: string) => void;
-  updateWidgetPosition: (widgetId: string, newPosition: number) => void;
-  getDateRangeParams: () => { startDate?: string; endDate?: string };
+// Define widget types
+export interface Widget {
+  id: string;
+  title: string;
+  type: 'chart' | 'value' | 'table' | 'list';
+  size: 'small' | 'medium' | 'large' | 'full';
+  kpiId?: string;
+  chartType?: 'bar' | 'line' | 'pie' | 'donut';
+  position?: number;
+  sqlQuery?: string;
+  layoutInfo?: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  };
 }
 
+// Define dashboard layout configuration
+export interface DashboardConfig {
+  id: string;
+  name: string;
+  createdBy: string;
+  widgets: Widget[];
+  layout: 'grid' | 'fluid';
+  isDefault: boolean;
+}
+
+// Define dashboard context type
+interface DashboardContextType {
+  dashboards: DashboardConfig[];
+  activeDashboard: DashboardConfig | null;
+  widgets: Widget[];
+  isEditMode: boolean;
+  timeRange: string;
+  setDashboards: (dashboards: DashboardConfig[]) => void;
+  setActiveDashboard: (dashboard: DashboardConfig) => void;
+  setWidgets: (widgets: Widget[]) => void;
+  addWidget: (widget: Widget) => void;
+  updateWidget: (id: string, widget: Partial<Widget>) => void;
+  removeWidget: (id: string) => void;
+  setIsEditMode: (isEdit: boolean) => void;
+  setTimeRange: (range: string) => void;
+  saveDashboard: () => Promise<void>;
+  createDashboard: (name: string) => void;
+}
+
+// Create context with default values
 const DashboardContext = createContext<DashboardContextType>({
-  dashboardConfig: { widgets: [] },
-  setDashboardConfig: () => {},
-  saveDashboardConfig: async () => {},
+  dashboards: [],
+  activeDashboard: null,
+  widgets: [],
   isEditMode: false,
-  setIsEditMode: () => {},
-  timeRange: 'today',
-  setTimeRange: () => {},
-  startDate: null,
-  setStartDate: () => {},
-  endDate: null,
-  setEndDate: () => {},
-  isConfigLoading: false,
-  availableWidgets: [],
+  timeRange: 'week',
+  setDashboards: () => {},
+  setActiveDashboard: () => {},
+  setWidgets: () => {},
   addWidget: () => {},
+  updateWidget: () => {},
   removeWidget: () => {},
-  updateWidgetPosition: () => {},
-  getDateRangeParams: () => ({}),
+  setIsEditMode: () => {},
+  setTimeRange: () => {},
+  saveDashboard: async () => {},
+  createDashboard: () => {},
 });
 
-export const useDashboard = () => useContext(DashboardContext);
-
+// Provider component
 interface DashboardProviderProps {
   children: ReactNode;
 }
 
 export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }) => {
-  const { currentUser, currentTenant } = useAuth();
-  const { toast } = useToast();
-  
-  const [dashboardConfig, setDashboardConfig] = useState<DashboardConfig>({ widgets: [] });
+  const [dashboards, setDashboards] = useState<DashboardConfig[]>([]);
+  const [activeDashboard, setActiveDashboard] = useState<DashboardConfig | null>(null);
+  const [widgets, setWidgets] = useState<Widget[]>([]);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [timeRange, setTimeRange] = useState<TimeRange>('today');
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-  const [isConfigLoading, setIsConfigLoading] = useState(false);
+  const [timeRange, setTimeRange] = useState('week');
 
-  // Available widgets for the dashboard
-  const availableWidgets = [
-    { type: 'kpi', title: 'Key Performance Indicators', description: 'AHT, CSAT, FCR, etc.' },
-    { type: 'call-volume', title: 'Call Volume Chart', description: 'Line chart of call volumes' },
-    { type: 'sentiment-analysis', title: 'Sentiment Analysis', description: 'Pie chart of call sentiments' },
-    { type: 'mobile-banking-metrics', title: 'Mobile Banking Metrics', description: 'App usage and transaction stats' },
-    { type: 'ivr-flow', title: 'IVR Flow Analysis', description: 'Sankey diagram of IVR paths' },
-    { type: 'agent-performance', title: 'Agent Performance', description: 'Table of agent metrics' },
-    { type: 'key-phrases', title: 'Key Phrases', description: 'Word cloud of common phrases' },
-    { type: 'alerts', title: 'Recent Alerts', description: 'System and KPI alerts' },
-  ];
-
-  // Load dashboard configuration when user or tenant changes
+  // Load dashboards from localStorage or API on mount
   useEffect(() => {
-    const loadDashboardConfig = async () => {
-      if (!currentUser || !currentTenant) return;
-
-      setIsConfigLoading(true);
+    const loadDashboards = async () => {
       try {
-        const response = await fetch(`/api/dashboard-customizations?userId=${currentUser.id}&tenantId=${currentTenant.id}`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to load dashboard configuration');
-        }
-        
-        const data = await response.json();
-        
-        if (data && data.dashboardConfig) {
-          try {
-            const config = typeof data.dashboardConfig === 'string' 
-              ? JSON.parse(data.dashboardConfig) 
-              : data.dashboardConfig;
-              
-            setDashboardConfig(config);
-          } catch (e) {
-            console.error('Error parsing dashboard config:', e);
-            setDashboardConfig({ widgets: [] });
+        // First try to load from API
+        // const response = await fetch('/api/dashboards');
+        // if (response.ok) {
+        //   const data = await response.json();
+        //   setDashboards(data);
+        //   if (data.length > 0) {
+        //     setActiveDashboard(data.find(d => d.isDefault) || data[0]);
+        //   }
+        //   return;
+        // }
+
+        // Fallback to localStorage if API fails
+        const savedDashboards = localStorage.getItem('user-dashboards');
+        if (savedDashboards) {
+          const parsedDashboards = JSON.parse(savedDashboards);
+          setDashboards(parsedDashboards);
+          
+          // Set active dashboard to default or first
+          if (parsedDashboards.length > 0) {
+            const defaultDashboard = parsedDashboards.find((d: DashboardConfig) => d.isDefault);
+            setActiveDashboard(defaultDashboard || parsedDashboards[0]);
           }
         } else {
           // Create a default dashboard if none exists
-          setDashboardConfig({
-            widgets: [
-              { id: 'kpi-1', type: 'kpi', title: 'Key Performance Indicators', size: 'full', position: 0, config: {} },
-              { id: 'call-volume-1', type: 'call-volume', title: 'Call Volume Trends', size: 'large', position: 1, config: {} },
-              { id: 'sentiment-1', type: 'sentiment-analysis', title: 'Call Sentiment Distribution', size: 'medium', position: 2, config: {} }
-            ]
-          });
+          const defaultDashboard: DashboardConfig = {
+            id: 'default',
+            name: 'Main Dashboard',
+            createdBy: 'system',
+            widgets: [],
+            layout: 'grid',
+            isDefault: true,
+          };
+          setDashboards([defaultDashboard]);
+          setActiveDashboard(defaultDashboard);
         }
       } catch (error) {
-        console.error('Failed to load dashboard config:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load dashboard configuration',
-          variant: 'destructive',
-        });
-        
-        // Create a default dashboard if loading fails
-        setDashboardConfig({
-          widgets: [
-            { id: 'kpi-1', type: 'kpi', title: 'Key Performance Indicators', size: 'full', position: 0, config: {} },
-            { id: 'call-volume-1', type: 'call-volume', title: 'Call Volume Trends', size: 'large', position: 1, config: {} },
-            { id: 'sentiment-1', type: 'sentiment-analysis', title: 'Call Sentiment Distribution', size: 'medium', position: 2, config: {} }
-          ]
-        });
-      } finally {
-        setIsConfigLoading(false);
+        console.error('Failed to load dashboards:', error);
       }
     };
 
-    loadDashboardConfig();
-  }, [currentUser, currentTenant]);
+    loadDashboards();
+  }, []);
 
-  // Save dashboard configuration
-  const saveDashboardConfig = async () => {
-    if (!currentUser || !currentTenant) return;
-
-    try {
-      const response = await apiRequest('POST', '/api/dashboard-customizations', {
-        userId: currentUser.id,
-        tenantId: currentTenant.id,
-        dashboardConfig: JSON.stringify(dashboardConfig),
-        lastUpdated: new Date().toISOString()
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save dashboard configuration');
-      }
-
-      toast({
-        title: 'Success',
-        description: 'Dashboard configuration saved',
-      });
-      
-      setIsEditMode(false);
-    } catch (error) {
-      console.error('Failed to save dashboard config:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to save dashboard configuration',
-        variant: 'destructive',
-      });
+  // Update widgets when active dashboard changes
+  useEffect(() => {
+    if (activeDashboard) {
+      setWidgets(activeDashboard.widgets);
     }
-  };
+  }, [activeDashboard]);
 
-  // Add a new widget to the dashboard
-  const addWidget = (widgetType: string) => {
-    const widget = availableWidgets.find(w => w.type === widgetType);
-    if (!widget) return;
-
-    const newWidget: DashboardWidget = {
-      id: `${widgetType}-${Date.now()}`,
-      type: widgetType,
-      title: widget.title,
-      size: 'medium',
-      position: dashboardConfig.widgets.length,
-      config: {}
-    };
-
-    setDashboardConfig({
-      ...dashboardConfig,
-      widgets: [...dashboardConfig.widgets, newWidget]
-    });
-  };
-
-  // Remove a widget from the dashboard
-  const removeWidget = (widgetId: string) => {
-    setDashboardConfig({
-      ...dashboardConfig,
-      widgets: dashboardConfig.widgets.filter(w => w.id !== widgetId)
-    });
-  };
-
-  // Update widget position
-  const updateWidgetPosition = (widgetId: string, newPosition: number) => {
-    const updatedWidgets = [...dashboardConfig.widgets];
-    const widgetIndex = updatedWidgets.findIndex(w => w.id === widgetId);
+  // Add a new widget
+  const addWidget = (widget: Widget) => {
+    const newWidgets = [...widgets, widget];
+    setWidgets(newWidgets);
     
-    if (widgetIndex === -1) return;
-    
-    const widget = updatedWidgets[widgetIndex];
-    updatedWidgets.splice(widgetIndex, 1);
-    updatedWidgets.splice(newPosition, 0, widget);
-    
-    // Update positions
-    updatedWidgets.forEach((w, i) => {
-      w.position = i;
-    });
-    
-    setDashboardConfig({
-      ...dashboardConfig,
-      widgets: updatedWidgets
-    });
-  };
-
-  // Get start and end date parameters based on time range
-  const getDateRangeParams = () => {
-    if (timeRange === 'custom' && startDate && endDate) {
-      return {
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
+    // Also update in the active dashboard
+    if (activeDashboard) {
+      const updatedDashboard = {
+        ...activeDashboard,
+        widgets: newWidgets,
       };
+      setActiveDashboard(updatedDashboard);
+      
+      // Update in dashboards array
+      const updatedDashboards = dashboards.map(d => 
+        d.id === updatedDashboard.id ? updatedDashboard : d
+      );
+      setDashboards(updatedDashboards);
     }
+  };
 
-    const now = new Date();
-    let start: Date;
+  // Update an existing widget
+  const updateWidget = (id: string, widgetUpdate: Partial<Widget>) => {
+    const updatedWidgets = widgets.map(widget => 
+      widget.id === id ? { ...widget, ...widgetUpdate } : widget
+    );
+    setWidgets(updatedWidgets);
     
-    switch (timeRange) {
-      case 'today':
-        start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-        return {
-          startDate: start.toISOString(),
-          endDate: now.toISOString()
-        };
-      case 'yesterday':
-        start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0);
-        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59);
-        return {
-          startDate: start.toISOString(),
-          endDate: end.toISOString()
-        };
-      case 'week':
-        start = new Date(now);
-        start.setDate(now.getDate() - 7);
-        return {
-          startDate: start.toISOString(),
-          endDate: now.toISOString()
-        };
-      case 'month':
-        start = new Date(now);
-        start.setMonth(now.getMonth() - 1);
-        return {
-          startDate: start.toISOString(),
-          endDate: now.toISOString()
-        };
-      default:
-        return {};
+    // Also update in the active dashboard
+    if (activeDashboard) {
+      const updatedDashboard = {
+        ...activeDashboard,
+        widgets: updatedWidgets,
+      };
+      setActiveDashboard(updatedDashboard);
+      
+      // Update in dashboards array
+      const updatedDashboards = dashboards.map(d => 
+        d.id === updatedDashboard.id ? updatedDashboard : d
+      );
+      setDashboards(updatedDashboards);
     }
+  };
+
+  // Remove a widget
+  const removeWidget = (id: string) => {
+    const updatedWidgets = widgets.filter(widget => widget.id !== id);
+    setWidgets(updatedWidgets);
+    
+    // Also update in the active dashboard
+    if (activeDashboard) {
+      const updatedDashboard = {
+        ...activeDashboard,
+        widgets: updatedWidgets,
+      };
+      setActiveDashboard(updatedDashboard);
+      
+      // Update in dashboards array
+      const updatedDashboards = dashboards.map(d => 
+        d.id === updatedDashboard.id ? updatedDashboard : d
+      );
+      setDashboards(updatedDashboards);
+    }
+  };
+
+  // Save dashboard to localStorage and/or API
+  const saveDashboard = async () => {
+    try {
+      // Save to localStorage
+      localStorage.setItem('user-dashboards', JSON.stringify(dashboards));
+      
+      // TODO: Save to API
+      // const response = await fetch('/api/dashboards', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify(dashboards),
+      // });
+      
+      // if (!response.ok) {
+      //   throw new Error('Failed to save dashboards');
+      // }
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error saving dashboard:', error);
+      return Promise.reject(error);
+    }
+  };
+
+  // Create a new dashboard
+  const createDashboard = (name: string) => {
+    const newDashboard: DashboardConfig = {
+      id: `dashboard-${Date.now()}`,
+      name,
+      createdBy: 'user',
+      widgets: [],
+      layout: 'grid',
+      isDefault: false,
+    };
+    
+    const updatedDashboards = [...dashboards, newDashboard];
+    setDashboards(updatedDashboards);
+    setActiveDashboard(newDashboard);
+    
+    // Save to localStorage
+    localStorage.setItem('user-dashboards', JSON.stringify(updatedDashboards));
+  };
+
+  const contextValue: DashboardContextType = {
+    dashboards,
+    activeDashboard,
+    widgets,
+    isEditMode, 
+    timeRange,
+    setDashboards,
+    setActiveDashboard,
+    setWidgets,
+    addWidget,
+    updateWidget,
+    removeWidget,
+    setIsEditMode,
+    setTimeRange,
+    saveDashboard,
+    createDashboard,
   };
 
   return (
-    <DashboardContext.Provider
-      value={{
-        dashboardConfig,
-        setDashboardConfig,
-        saveDashboardConfig,
-        isEditMode,
-        setIsEditMode,
-        timeRange,
-        setTimeRange,
-        startDate,
-        setStartDate,
-        endDate,
-        setEndDate,
-        isConfigLoading,
-        availableWidgets,
-        addWidget,
-        removeWidget,
-        updateWidgetPosition,
-        getDateRangeParams,
-      }}
-    >
+    <DashboardContext.Provider value={contextValue}>
       {children}
     </DashboardContext.Provider>
   );
 };
+
+// Hook for easy access to the dashboard context
+export function useDashboard() {
+  return useContext(DashboardContext);
+}
