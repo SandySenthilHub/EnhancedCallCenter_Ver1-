@@ -8,60 +8,33 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Minus, Phone, Headphones, Users, Clock } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Phone, Headphones, Users, Clock, Plus } from "lucide-react";
+import DataTable from "@/components/ui/data-table";
+import KpiEditor from "@/components/kpi/KpiEditor";
 
 const ContactCenter: React.FC = () => {
-  const [priority, setPriority] = useState<'critical' | 'medium' | 'low' | 'all'>('all');
+  const [kpis, setKpis] = useState<any[]>([]);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [selectedKpi, setSelectedKpi] = useState<any>(null);
   const { currentTenant } = useAuth();
   const tenantId = currentTenant?.id || 1;
 
-  // Get KPI data
-  const kpiDefinitions = React.useMemo(() => {
-    return getKpisByTypeAndPriority(
-      'contact_center', 
-      priority !== 'all' ? priority : undefined
-    );
-  }, [priority]);
+  // Get KPI data from the local store
+  React.useEffect(() => {
+    const kpiDefinitions = getKpisByTypeAndPriority('contact_center');
+    const generatedKpis = generateKpiValues(tenantId, kpiDefinitions);
+    setKpis(generatedKpis);
+  }, [tenantId]);
 
-  // Generate KPI values based on tenant ID
-  const kpis = React.useMemo(() => {
-    if (!kpiDefinitions) return [];
-    return generateKpiValues(tenantId, kpiDefinitions);
-  }, [kpiDefinitions, tenantId]);
-
-  // Get trend indicator component
-  const getTrendIndicator = (kpi: any) => {
-    // Calculate percentage of target
-    const percentage = (kpi.value / kpi.target) * 100;
+  // Trend indicator component
+  const getTrendIndicator = (value: number, target: number, threshold: number) => {
+    const percentage = (value / target) * 100;
     
     if (percentage >= 95) {
       return <TrendingUp className="text-green-500 ml-2" size={18} />;
-    } else if (percentage < kpi.threshold / kpi.target * 100) {
+    } else if (percentage < threshold / target * 100) {
       return <TrendingDown className="text-red-500 ml-2" size={18} />;
     } else {
       return <Minus className="text-yellow-500 ml-2" size={18} />;
@@ -69,12 +42,12 @@ const ContactCenter: React.FC = () => {
   };
 
   // Get color based on KPI status
-  const getStatusColor = (kpi: any) => {
-    const percentage = (kpi.value / kpi.target) * 100;
+  const getStatusColor = (value: number, target: number, threshold: number) => {
+    const percentage = (value / target) * 100;
     
     if (percentage >= 95) {
       return "bg-green-100 text-green-800";
-    } else if (percentage < kpi.threshold / kpi.target * 100) {
+    } else if (percentage < threshold / target * 100) {
       return "bg-red-100 text-red-800";
     } else {
       return "bg-yellow-100 text-yellow-800";
@@ -95,6 +68,84 @@ const ContactCenter: React.FC = () => {
     }
   };
 
+  // Handle create KPI
+  const handleCreate = () => {
+    setSelectedKpi(null);
+    setIsEditorOpen(true);
+  };
+
+  // Handle edit KPI
+  const handleEdit = (kpi: any) => {
+    setSelectedKpi(kpi);
+    setIsEditorOpen(true);
+  };
+
+  // Handle delete KPI
+  const handleDelete = (kpi: any) => {
+    setKpis(prevKpis => prevKpis.filter(k => k.id !== kpi.id));
+  };
+
+  // Handle save KPI
+  const handleSave = (kpi: any) => {
+    if (selectedKpi) {
+      // Edit existing KPI
+      setKpis(prevKpis => prevKpis.map(k => k.id === kpi.id ? { ...kpi, value: k.value } : k));
+    } else {
+      // Create new KPI
+      const newValue = Math.random() * (kpi.target * 1.2);
+      setKpis(prevKpis => [...prevKpis, { ...kpi, value: Math.round(newValue * 100) / 100 }]);
+    }
+  };
+
+  // Define data table columns
+  const columns = [
+    {
+      key: 'name',
+      header: 'KPI Name',
+      width: 'w-[200px]'
+    },
+    {
+      key: 'priority',
+      header: 'Priority',
+      width: 'w-[100px]',
+      render: (value: string) => getPriorityBadge(value)
+    },
+    {
+      key: 'description',
+      header: 'Description',
+      width: 'w-[300px]'
+    },
+    {
+      key: 'target',
+      header: 'Target',
+      align: 'right' as 'right',
+      render: (value: number, record: any) => `${value}${record.unit}`
+    },
+    {
+      key: 'threshold',
+      header: 'Threshold',
+      align: 'right' as 'right',
+      render: (value: number, record: any) => `${value}${record.unit}`
+    },
+    {
+      key: 'value',
+      header: 'Current Value',
+      align: 'right' as 'right',
+      render: (value: number, record: any) => `${value}${record.unit}`
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      align: 'right' as 'right',
+      render: (value: any, record: any) => (
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(record.value, record.target, record.threshold)}`}>
+          {record.value >= record.target ? 'On Target' : record.value >= record.threshold ? 'Warning' : 'Alert'}
+          {getTrendIndicator(record.value, record.target, record.threshold)}
+        </span>
+      )
+    }
+  ];
+
   return (
     <div className="p-6">
       <div className="flex flex-col space-y-2 mb-6">
@@ -104,102 +155,69 @@ const ContactCenter: React.FC = () => {
         </p>
       </div>
 
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-4">
-          <Card className="p-2 px-4 flex items-center space-x-2">
-            <Phone size={18} />
-            <div>
-              <p className="text-xs text-muted-foreground">Daily Calls</p>
-              <p className="font-medium">1,284</p>
-            </div>
-          </Card>
-          
-          <Card className="p-2 px-4 flex items-center space-x-2">
-            <Headphones size={18} />
-            <div>
-              <p className="text-xs text-muted-foreground">Active Agents</p>
-              <p className="font-medium">42</p>
-            </div>
-          </Card>
-          
-          <Card className="p-2 px-4 flex items-center space-x-2">
-            <Users size={18} />
-            <div>
-              <p className="text-xs text-muted-foreground">Queue Size</p>
-              <p className="font-medium">8</p>
-            </div>
-          </Card>
-          
-          <Card className="p-2 px-4 flex items-center space-x-2">
-            <Clock size={18} />
-            <div>
-              <p className="text-xs text-muted-foreground">Avg. Wait Time</p>
-              <p className="font-medium">1m 24s</p>
-            </div>
-          </Card>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Select 
-            value={priority} 
-            onValueChange={(value) => setPriority(value as any)}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by priority" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Priority</SelectLabel>
-                <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <Card className="p-4 flex items-start space-x-4">
+          <Phone size={24} className="mt-1 text-primary" />
+          <div>
+            <p className="text-sm text-muted-foreground">Daily Calls</p>
+            <p className="text-2xl font-semibold">1,284</p>
+            <p className="text-xs text-muted-foreground">+12% from yesterday</p>
+          </div>
+        </Card>
+        
+        <Card className="p-4 flex items-start space-x-4">
+          <Headphones size={24} className="mt-1 text-primary" />
+          <div>
+            <p className="text-sm text-muted-foreground">Active Agents</p>
+            <p className="text-2xl font-semibold">42</p>
+            <p className="text-xs text-muted-foreground">95% of capacity</p>
+          </div>
+        </Card>
+        
+        <Card className="p-4 flex items-start space-x-4">
+          <Users size={24} className="mt-1 text-primary" />
+          <div>
+            <p className="text-sm text-muted-foreground">Queue Size</p>
+            <p className="text-2xl font-semibold">8</p>
+            <p className="text-xs text-muted-foreground">Average wait: 3m 12s</p>
+          </div>
+        </Card>
+        
+        <Card className="p-4 flex items-start space-x-4">
+          <Clock size={24} className="mt-1 text-primary" />
+          <div>
+            <p className="text-sm text-muted-foreground">Avg. Handle Time</p>
+            <p className="text-2xl font-semibold">4m 12s</p>
+            <p className="text-xs text-muted-foreground">-8% from target</p>
+          </div>
+        </Card>
+      </div>
+      
+      <div className="mb-8">
+        <DataTable
+          data={kpis}
+          columns={columns}
+          keyField="id"
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onCreate={handleCreate}
+          title="Contact Center KPIs"
+          description={`Monitoring ${kpis.length} key performance indicators for ${currentTenant?.name || 'X Bank'}`}
+          pageSize={10}
+          isCreatable={true}
+          isEditable={true}
+          isDeletable={true}
+        />
       </div>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Call Center KPI Dashboard</CardTitle>
-          <CardDescription>Monitoring {kpis.length} key performance indicators</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableCaption>Contact center KPIs for {currentTenant?.name || 'X Bank'}</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[250px]">KPI Name</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Target</TableHead>
-                <TableHead className="text-right">Threshold</TableHead>
-                <TableHead className="text-right">Current Value</TableHead>
-                <TableHead className="text-right">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {kpis.map(kpi => (
-                <TableRow key={kpi.id}>
-                  <TableCell className="font-medium">{kpi.name}</TableCell>
-                  <TableCell>{getPriorityBadge(kpi.priority)}</TableCell>
-                  <TableCell className="max-w-md truncate">{kpi.description}</TableCell>
-                  <TableCell className="text-right">{kpi.target}{kpi.unit}</TableCell>
-                  <TableCell className="text-right">{kpi.threshold}{kpi.unit}</TableCell>
-                  <TableCell className="text-right font-medium">{kpi.value}{kpi.unit}</TableCell>
-                  <TableCell className="text-right">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(kpi)}`}>
-                      {kpi.value >= kpi.target ? 'On Target' : kpi.value >= kpi.threshold ? 'Warning' : 'Alert'}
-                      {getTrendIndicator(kpi)}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {/* KPI Editor Dialog */}
+      <KpiEditor
+        kpi={selectedKpi}
+        isOpen={isEditorOpen}
+        onClose={() => setIsEditorOpen(false)}
+        onSave={handleSave}
+        kpiType="contact_center"
+      />
     </div>
   );
 };
