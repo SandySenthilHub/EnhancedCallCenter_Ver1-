@@ -16,6 +16,10 @@ import {
   insertAlertSchema
 } from "@shared/schema";
 import { analyzeSentiment, detectIntent, detectTone, extractKeyPhrases, recognizeEntities, transcribeAudio } from "./cognitiveServices";
+import { checkDatabaseHealth } from "./db";
+import { mlModelManager } from "./ml/models";
+import { detectSpeakers, isDeepgramConfigured, transcribeAudioWithDeepgram } from "./deepgram";
+import { calculateKpi, getKpiById, getKpisByTypeAndPriority } from "./kpiDefinitions";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Tenants
@@ -473,6 +477,248 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ tone });
     } catch (error) {
       res.status(500).json({ message: "Failed to detect tone" });
+    }
+  });
+
+  // KPI Definition Endpoints
+  app.get('/api/kpi-definitions', async (req, res) => {
+    try {
+      const type = req.query.type as 'contact_center' | 'mobile_banking';
+      const priority = req.query.priority as 'critical' | 'medium' | 'low' | undefined;
+      
+      if (!type || (type !== 'contact_center' && type !== 'mobile_banking')) {
+        return res.status(400).json({ message: "Invalid or missing type parameter. Must be 'contact_center' or 'mobile_banking'" });
+      }
+      
+      const kpis = getKpisByTypeAndPriority(type, priority);
+      res.json(kpis);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve KPI definitions" });
+    }
+  });
+  
+  app.get('/api/kpi-definitions/:id', async (req, res) => {
+    try {
+      const id = req.params.id;
+      const kpi = getKpiById(id);
+      
+      if (!kpi) {
+        return res.status(404).json({ message: "KPI definition not found" });
+      }
+      
+      res.json(kpi);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve KPI definition" });
+    }
+  });
+  
+  app.get('/api/kpi-calculation/:id', async (req, res) => {
+    try {
+      const id = req.params.id;
+      const tenantId = Number(req.query.tenantId);
+      const startDate = req.query.startDate ? new Date(String(req.query.startDate)) : undefined;
+      const endDate = req.query.endDate ? new Date(String(req.query.endDate)) : undefined;
+      
+      if (isNaN(tenantId)) {
+        return res.status(400).json({ message: "Invalid tenant ID" });
+      }
+      
+      const kpi = getKpiById(id);
+      if (!kpi) {
+        return res.status(404).json({ message: "KPI definition not found" });
+      }
+      
+      const result = await calculateKpi(id, tenantId, startDate, endDate);
+      
+      res.json({
+        id,
+        name: kpi.name,
+        description: kpi.description,
+        type: kpi.type,
+        priority: kpi.priority,
+        ...result,
+        timestamp: new Date()
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to calculate KPI" });
+    }
+  });
+  
+  // Bulk KPI calculation
+  app.post('/api/kpi-calculations', async (req, res) => {
+    try {
+      const { tenantId, kpiIds, startDate, endDate } = req.body;
+      
+      if (!tenantId || !kpiIds || !Array.isArray(kpiIds)) {
+        return res.status(400).json({ 
+          message: "Missing required fields", 
+          required: ["tenantId", "kpiIds (array)"] 
+        });
+      }
+      
+      const startDateObj = startDate ? new Date(startDate) : undefined;
+      const endDateObj = endDate ? new Date(endDate) : undefined;
+      
+      const results = [];
+      
+      for (const id of kpiIds) {
+        const kpi = getKpiById(id);
+        if (kpi) {
+          try {
+            const result = await calculateKpi(id, tenantId, startDateObj, endDateObj);
+            results.push({
+              id,
+              name: kpi.name,
+              description: kpi.description,
+              type: kpi.type,
+              priority: kpi.priority,
+              ...result,
+              timestamp: new Date()
+            });
+          } catch (error) {
+            console.error(`Error calculating KPI ${id}:`, error);
+            results.push({
+              id,
+              name: kpi.name,
+              error: "Failed to calculate KPI"
+            });
+          }
+        } else {
+          results.push({
+            id,
+            error: "KPI definition not found"
+          });
+        }
+      }
+      
+      res.json(results);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to calculate KPIs" });
+    }
+  });
+  
+  // Health Check Endpoints
+  app.get('/api/health', async (req, res) => {
+    const start = Date.now();
+    const services = {
+      api: {
+        status: 'healthy',
+        latency: 0
+      },
+      database: await checkDatabaseHealth(),
+      cognitive: {
+        status: 'unknown',
+        message: 'Azure Cognitive Services not checked'
+      }
+    };
+    
+    // Check if we have Azure keys configured
+    const hasSpeechKey = !!process.env.AZURE_SPEECH_KEY;
+    const hasTextAnalyticsKey = !!process.env.AZURE_TEXT_ANALYTICS_KEY;
+    
+    if (hasSpeechKey || hasTextAnalyticsKey) {
+      services.cognitive.status = 'configured';
+      services.cognitive.message = 'Azure Cognitive Services configured';
+    }
+    
+    res.json({
+      status: services.database.isHealthy ? 'healthy' : 'degraded',
+      latency: Date.now() - start,
+      services
+    });
+  });
+  
+  // ML Model Management Endpoints
+  app.get('/api/ml/models', async (req, res) => {
+    try {
+      const tenantId = Number(req.query.tenantId);
+      
+      if (isNaN(tenantId)) {
+        return res.status(400).json({ message: "Invalid tenant ID" });
+      }
+      
+      const models = await mlModelManager.getModels(tenantId);
+      res.json(models);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve ML models" });
+    }
+  });
+  
+  app.get('/api/ml/models/:id', async (req, res) => {
+    try {
+      const modelId = parseInt(req.params.id);
+      const tenantId = Number(req.query.tenantId);
+      
+      if (isNaN(tenantId)) {
+        return res.status(400).json({ message: "Invalid tenant ID" });
+      }
+      
+      const model = await mlModelManager.getModelById(modelId, tenantId);
+      res.json(model);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve ML model" });
+    }
+  });
+  
+  app.post('/api/ml/models', async (req, res) => {
+    try {
+      const { tenantId, name, type, parameters, featureColumns, targetColumn, trainingDataQuery } = req.body;
+      
+      if (!tenantId || !name || !type || !featureColumns) {
+        return res.status(400).json({ 
+          message: "Missing required fields", 
+          required: ["tenantId", "name", "type", "featureColumns"] 
+        });
+      }
+      
+      const modelId = await mlModelManager.registerModel(tenantId, {
+        name,
+        type,
+        parameters: parameters || {},
+        featureColumns,
+        targetColumn,
+        trainingDataQuery
+      });
+      
+      // Start training the model
+      if (type === 'regression') {
+        mlModelManager.trainRegressionModel(modelId, tenantId).catch(console.error);
+      } else if (type === 'clustering') {
+        mlModelManager.trainClusteringModel(modelId, tenantId).catch(console.error);
+      } else if (type === 'anomaly') {
+        mlModelManager.trainAnomalyDetectionModel(modelId, tenantId).catch(console.error);
+      }
+      
+      res.status(201).json({ 
+        id: modelId,
+        name,
+        type,
+        status: 'training'
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to register ML model" });
+    }
+  });
+  
+  app.post('/api/ml/predict', async (req, res) => {
+    try {
+      const { tenantId, modelId, features } = req.body;
+      
+      if (!tenantId || !modelId || !features) {
+        return res.status(400).json({ 
+          message: "Missing required fields", 
+          required: ["tenantId", "modelId", "features"] 
+        });
+      }
+      
+      const prediction = await mlModelManager.predict(tenantId, {
+        modelId,
+        features
+      });
+      
+      res.json(prediction);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to make prediction" });
     }
   });
 
