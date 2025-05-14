@@ -9,6 +9,10 @@ export interface KpiDefinition {
   unit: string;
   target: number;
   threshold: number;
+  calculation?: string;        // SQL query to calculate the KPI
+  sourceTables?: string[];     // Source tables used for calculation
+  sourceSchema?: string;       // Database schema for this KPI
+  isRealTime?: boolean;        // Whether KPI requires real-time updates
 }
 
 // Contact Center Critical KPIs
@@ -21,7 +25,31 @@ export const contactCenterCriticalKpis: KpiDefinition[] = [
     priority: 'critical',
     unit: 'seconds',
     target: 180,
-    threshold: 240
+    threshold: 240,
+    calculation: `
+      SELECT 
+        AVG(duration) as average_handle_time
+      FROM 
+        Calls
+      WHERE 
+        tenantId = @tenantId
+        AND startTime BETWEEN @startDate AND @endDate
+        AND status = 'completed'
+    `,
+    sourceTables: ['Calls'],
+    sourceSchema: `
+      -- Calls table schema
+      CREATE TABLE Calls (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        tenantId INT NOT NULL,
+        callId NVARCHAR(100) NOT NULL,
+        startTime DATETIME2 NOT NULL,
+        endTime DATETIME2 NULL,
+        duration INT NULL,
+        status NVARCHAR(20) NOT NULL
+      )
+    `,
+    isRealTime: true
   },
   {
     id: 'cc_csat',
@@ -31,7 +59,30 @@ export const contactCenterCriticalKpis: KpiDefinition[] = [
     priority: 'critical',
     unit: '%',
     target: 85,
-    threshold: 70
+    threshold: 70,
+    calculation: `
+      SELECT 
+        AVG(sentiment) * 100 as csat_score
+      FROM 
+        CallTranscriptions ct
+      JOIN 
+        Calls c ON ct.callId = c.id
+      WHERE 
+        c.tenantId = @tenantId
+        AND c.startTime BETWEEN @startDate AND @endDate
+    `,
+    sourceTables: ['Calls', 'CallTranscriptions'],
+    sourceSchema: `
+      -- CallTranscriptions table schema
+      CREATE TABLE CallTranscriptions (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        callId INT NOT NULL,
+        text NVARCHAR(MAX) NOT NULL,
+        sentiment FLOAT NULL,
+        CONSTRAINT FK_CallTranscriptions_Calls FOREIGN KEY (callId) REFERENCES Calls(id)
+      )
+    `,
+    isRealTime: false
   },
   {
     id: 'cc_fcr',
@@ -41,7 +92,31 @@ export const contactCenterCriticalKpis: KpiDefinition[] = [
     priority: 'critical',
     unit: '%',
     target: 75,
-    threshold: 60
+    threshold: 60,
+    calculation: `
+      SELECT 
+        (COUNT(CASE WHEN c.resolved_on_first = 1 THEN 1 END) * 100.0 / COUNT(*)) as fcr_percentage
+      FROM 
+        (
+          SELECT 
+            customerId,
+            MIN(startTime) as first_call_time,
+            CASE WHEN 
+              (SELECT COUNT(*) FROM Calls c2 
+               WHERE c2.customerId = c1.customerId 
+               AND c2.startTime BETWEEN c1.startTime AND DATEADD(day, 7, c1.startTime)) = 1
+            THEN 1 ELSE 0 END as resolved_on_first
+          FROM 
+            Calls c1
+          WHERE 
+            tenantId = @tenantId
+            AND startTime BETWEEN @startDate AND @endDate
+          GROUP BY 
+            customerId
+        ) c
+    `,
+    sourceTables: ['Calls'],
+    isRealTime: false
   },
   {
     id: 'cc_sentiment',
@@ -213,7 +288,32 @@ export const mobileBankingCriticalKpis: KpiDefinition[] = [
     priority: 'critical',
     unit: '%',
     target: 98,
-    threshold: 95
+    threshold: 95,
+    calculation: `
+      SELECT 
+        (COUNT(CASE WHEN status = 'success' THEN 1 END) * 100.0 / COUNT(*)) as login_success_rate
+      FROM 
+        AppSessions
+      WHERE 
+        tenantId = @tenantId
+        AND startTime BETWEEN @startDate AND @endDate
+    `,
+    sourceTables: ['AppSessions'],
+    sourceSchema: `
+      -- AppSessions table schema
+      CREATE TABLE AppSessions (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        tenantId INT NOT NULL,
+        sessionId NVARCHAR(100) NOT NULL,
+        userId NVARCHAR(100) NOT NULL,
+        status NVARCHAR(20) NOT NULL,
+        startTime DATETIME2 NOT NULL,
+        endTime DATETIME2 NULL,
+        duration INT NULL,
+        crashes INT NULL DEFAULT 0
+      )
+    `,
+    isRealTime: true
   },
   {
     id: 'mb_transaction_success',
@@ -223,7 +323,30 @@ export const mobileBankingCriticalKpis: KpiDefinition[] = [
     priority: 'critical',
     unit: '%',
     target: 99,
-    threshold: 97
+    threshold: 97,
+    calculation: `
+      SELECT 
+        (COUNT(CASE WHEN status = 'completed' THEN 1 END) * 100.0 / COUNT(*)) as transaction_success_rate
+      FROM 
+        MobileTransactions
+      WHERE 
+        tenantId = @tenantId
+        AND timestamp BETWEEN @startDate AND @endDate
+    `,
+    sourceTables: ['MobileTransactions'],
+    sourceSchema: `
+      -- MobileTransactions table schema
+      CREATE TABLE MobileTransactions (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        tenantId INT NOT NULL,
+        transactionId NVARCHAR(100) NOT NULL,
+        userId NVARCHAR(100) NOT NULL,
+        type NVARCHAR(50) NOT NULL,
+        status NVARCHAR(20) NOT NULL,
+        timestamp DATETIME2 NOT NULL
+      )
+    `,
+    isRealTime: true
   },
   {
     id: 'mb_active_users',
@@ -233,7 +356,18 @@ export const mobileBankingCriticalKpis: KpiDefinition[] = [
     priority: 'critical',
     unit: 'users',
     target: 50000,
-    threshold: 30000
+    threshold: 30000,
+    calculation: `
+      SELECT 
+        COUNT(DISTINCT userId) as daily_active_users
+      FROM 
+        AppSessions
+      WHERE 
+        tenantId = @tenantId
+        AND startTime BETWEEN @startDate AND @endDate
+    `,
+    sourceTables: ['AppSessions'],
+    isRealTime: false
   },
   {
     id: 'mb_transaction_volume',
