@@ -13,7 +13,9 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 // Hook for easy access to the theme context
-export const useTheme = () => useContext(ThemeContext);
+export function useTheme() {
+  return useContext(ThemeContext);
+}
 
 // Theme provider component
 interface ThemeProviderProps {
@@ -26,10 +28,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const saved = localStorage.getItem('dashboard-theme');
     return saved || 'sunset';
   });
+  
+  // Initialize theme on component mount
+  useEffect(() => {
+    // Set initial theme on document when component mounts
+    document.documentElement.setAttribute('data-theme', currentTheme);
+  }, []);
 
-  // Update localStorage when theme changes
+  // Update localStorage and apply theme to document when theme changes
   useEffect(() => {
     localStorage.setItem('dashboard-theme', currentTheme);
+    
+    // Apply theme to the document element
+    document.documentElement.setAttribute('data-theme', currentTheme);
     
     // You could also make an API call here to save the theme preference
     // Example: api.post('/user/preferences', { theme: currentTheme });

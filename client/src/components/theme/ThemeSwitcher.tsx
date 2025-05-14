@@ -12,7 +12,7 @@ import { Check } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 // Define the themes according to SRS
-export const themes = {
+const themes = {
   sunset: { 
     name: 'Vibrant Sunset',
     bg: 'bg-orange-50', 
@@ -75,8 +75,8 @@ export const themes = {
   },
 };
 
-export type ThemeKey = keyof typeof themes;
-export type ThemeValues = typeof themes[ThemeKey];
+type ThemeKey = keyof typeof themes;
+type ThemeValues = typeof themes[ThemeKey];
 
 interface ThemeSwitcherProps {
   isOpen: boolean;

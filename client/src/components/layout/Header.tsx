@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboard } from '@/contexts/DashboardContext';
 import { Edit2, User } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ThemeSwitcher, ThemeSwitcherButton } from '@/components/theme/ThemeSwitcher';
 
 const pageNames: Record<string, string> = {
   '/': 'Dashboard',
@@ -18,6 +19,7 @@ const Header: React.FC = () => {
   const [location] = useLocation();
   const { users, currentUser, setCurrentUser } = useAuth();
   const { isEditMode, setIsEditMode, timeRange, setTimeRange } = useDashboard();
+  const [isThemeDialogOpen, setIsThemeDialogOpen] = useState(false);
 
   const pageName = pageNames[location] || 'Contact Center & Mobile Banking Dashboard';
   const pageDescription = location === '/' 
@@ -55,6 +57,13 @@ const Header: React.FC = () => {
               </SelectContent>
             </Select>
           </div>
+          
+          {/* Theme Switcher */}
+          <ThemeSwitcherButton onClick={() => setIsThemeDialogOpen(true)} />
+          <ThemeSwitcher 
+            isOpen={isThemeDialogOpen} 
+            onClose={() => setIsThemeDialogOpen(false)} 
+          />
           
           {/* User Selector */}
           <div className="relative">
