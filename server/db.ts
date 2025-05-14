@@ -15,8 +15,35 @@ export async function initializeDatabase(): Promise<boolean> {
     );
     
     if (tables.length === 0) {
-      console.log('Database schema not found. Schema initialization required.');
-      return false;
+      console.log('Database schema not found. Initializing schema...');
+      try {
+        // Read and execute schema creation script
+        const fs = require('fs');
+        const path = require('path');
+        
+        const schemaPath = path.join(__dirname, 'sql', 'create-schema.sql');
+        console.log(`Reading schema file from ${schemaPath}`);
+        const schemaSQL = fs.readFileSync(schemaPath, 'utf8');
+        
+        const pool = await getPool();
+        console.log('Executing schema creation script...');
+        await pool.request().batch(schemaSQL);
+        console.log('Schema created successfully');
+        
+        // Set up Row-Level Security
+        const rlsPath = path.join(__dirname, 'sql', 'setup-rls.sql');
+        console.log(`Reading RLS file from ${rlsPath}`);
+        const rlsSQL = fs.readFileSync(rlsPath, 'utf8');
+        
+        console.log('Setting up Row-Level Security...');
+        await pool.request().batch(rlsSQL);
+        console.log('Row-Level Security set up successfully');
+        
+        return true;
+      } catch (error) {
+        console.error('Failed to initialize database schema:', error);
+        return false;
+      }
     }
     
     // Get current row counts for important tables
