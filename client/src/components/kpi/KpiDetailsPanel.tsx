@@ -177,6 +177,110 @@ const KpiDetailsPanel: React.FC<KpiDetailsPanelProps> = ({ isOpen, onClose, kpi,
             </div>
           </TabsContent>
           
+          <TabsContent value="chart" className="mt-4">
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium mb-2">Annual Performance Data</h4>
+              {yearlyData ? (
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={yearlyData.historicalData}
+                      margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                      <XAxis 
+                        dataKey="date" 
+                        tick={{ fontSize: 10 }}
+                        tickFormatter={(value) => {
+                          // Show just month and day
+                          const date = new Date(value);
+                          return `${date.getMonth() + 1}/${date.getDate()}`;
+                        }}
+                        interval={30} // Show approximately monthly ticks
+                      />
+                      <YAxis 
+                        tick={{ fontSize: 10 }}
+                        tickFormatter={(value) => {
+                          // Format the value based on unit type
+                          if (kpi.unit === '%') {
+                            return `${value}%`;
+                          } else if (parseInt(value) > 1000) {
+                            return `${(value / 1000).toFixed(1)}k`;
+                          }
+                          return value;
+                        }}
+                      />
+                      <Tooltip 
+                        formatter={(value) => [
+                          `${value} ${kpi.unit}`, 
+                          'Value'
+                        ]}
+                        labelFormatter={(label) => {
+                          const date = new Date(label);
+                          return date.toLocaleDateString(undefined, { 
+                            weekday: 'short', 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          });
+                        }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="value" 
+                        stroke="#8884d8" 
+                        fillOpacity={1} 
+                        fill="url(#colorValue)" 
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-60 text-muted-foreground">
+                  Loading chart data...
+                </div>
+              )}
+              
+              <div className="grid grid-cols-3 gap-4 mt-4">
+                <div className="bg-background rounded-md border p-3 text-center">
+                  <div className="text-muted-foreground text-xs mb-1">Current</div>
+                  <div className="text-lg font-medium">
+                    {yearlyData ? `${yearlyData.currentValue} ${kpi.unit}` : '-'}
+                  </div>
+                </div>
+                <div className="bg-background rounded-md border p-3 text-center">
+                  <div className="text-muted-foreground text-xs mb-1">Target</div>
+                  <div className="text-lg font-medium">
+                    {kpi.target} {kpi.unit}
+                  </div>
+                </div>
+                <div className="bg-background rounded-md border p-3 text-center">
+                  <div className="text-muted-foreground text-xs mb-1">Trend</div>
+                  <div className="text-lg font-medium flex items-center justify-center">
+                    {yearlyData && (
+                      <span className={`flex items-center ${
+                        yearlyData.trend === 'up' ? 'text-green-500' : 
+                        yearlyData.trend === 'down' ? 'text-red-500' : 
+                        'text-yellow-500'
+                      }`}>
+                        {yearlyData.trend === 'up' && '↑'}
+                        {yearlyData.trend === 'down' && '↓'}
+                        {yearlyData.trend === 'flat' && '→'}
+                        {yearlyData.trendPercentage}%
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          
           <TabsContent value="data" className="mt-4">
             <div className="space-y-4">
               <div className="text-muted-foreground text-sm">

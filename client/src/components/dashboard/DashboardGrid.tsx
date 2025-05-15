@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
 import { useDashboard, Widget } from '@/contexts/DashboardContext';
 import DashboardWidget from './DashboardWidget';
+import KpiWidget from './KpiWidget';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import AddWidgetDialog from './AddWidgetDialog';
 import { useTheme } from '@/contexts/ThemeContext';
+import { 
+  contactCenterCriticalKpis,
+  contactCenterMediumKpis,
+  contactCenterLowKpis,
+  mobileBankingCriticalKpis,
+  mobileBankingMediumKpis,
+  mobileBankingLowKpis
+} from '@/lib/localKpiData';
 
 // Import chart components as needed
 // import BarChartComponent from './charts/BarChartComponent';
@@ -85,7 +94,22 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({ className }) => {
     }
   };
   
-  // Placeholder content for widget types
+  // Combine all KPIs for easy lookup
+  const allKpis = [
+    ...contactCenterCriticalKpis,
+    ...contactCenterMediumKpis,
+    ...contactCenterLowKpis,
+    ...mobileBankingCriticalKpis,
+    ...mobileBankingMediumKpis,
+    ...mobileBankingLowKpis
+  ];
+  
+  // Get KPI definition by ID
+  const getKpiById = (kpiId: string) => {
+    return allKpis.find(kpi => kpi.id === kpiId);
+  };
+
+  // Render content for each widget type
   const renderWidgetContent = (widget: Widget) => {
     switch (widget.type) {
       case 'chart':
@@ -98,6 +122,15 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({ className }) => {
           </div>
         );
       case 'value':
+        // If this is a KPI widget with a valid kpiId, use the KpiWidget
+        if (widget.kpiId) {
+          const kpiDefinition = getKpiById(widget.kpiId);
+          if (kpiDefinition) {
+            // We're using a different rendering method for KPI widgets
+            return null;
+          }
+        }
+        // Fallback for non-KPI value widgets
         return (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="text-4xl font-bold">123</div>
@@ -139,26 +172,49 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({ className }) => {
         className="grid grid-cols-12 gap-4"
         onDragOver={handleDragOver}
       >
-        {sortedWidgets.map((widget, index) => (
-          <div
-            key={widget.id}
-            className={`${getSizeClass(widget.size)}`}
-            onDrop={(e) => handleDrop(e, index)}
-          >
-            <DashboardWidget
-              id={widget.id}
-              title={widget.title}
-              type={widget.type}
-              size={widget.size}
-              onRemove={removeWidget}
-              onSizeChange={handleSizeChange}
-              draggable={isEditMode}
-              onDragStart={(e) => handleDragStart(e, widget.id)}
+        {sortedWidgets.map((widget, index) => {
+          // Check if this is a KPI widget with a valid kpiId
+          const isKpiWidget = widget.type === 'value' && widget.kpiId;
+          const kpiDefinition = isKpiWidget ? getKpiById(widget.kpiId!) : null;
+          
+          return (
+            <div
+              key={widget.id}
+              className={`${getSizeClass(widget.size)}`}
+              onDrop={(e) => handleDrop(e, index)}
             >
-              {renderWidgetContent(widget)}
-            </DashboardWidget>
-          </div>
-        ))}
+              {isKpiWidget && kpiDefinition ? (
+                // Render specialized KpiWidget for KPIs
+                <KpiWidget
+                  id={widget.id}
+                  title={widget.title}
+                  size={widget.size}
+                  onRemove={removeWidget}
+                  onSizeChange={handleSizeChange}
+                  draggable={isEditMode}
+                  onDragStart={(e) => handleDragStart(e, widget.id)}
+                  kpiDefinition={kpiDefinition}
+                />
+              ) : (
+                // Render standard widget for non-KPI widgets
+                <DashboardWidget
+                  id={widget.id}
+                  title={widget.title}
+                  type={widget.type}
+                  size={widget.size}
+                  onRemove={removeWidget}
+                  onSizeChange={handleSizeChange}
+                  draggable={isEditMode}
+                  onDragStart={(e) => handleDragStart(e, widget.id)}
+                  kpiId={widget.kpiId}
+                  sqlQuery={widget.sqlQuery}
+                >
+                  {renderWidgetContent(widget)}
+                </DashboardWidget>
+              )}
+            </div>
+          );
+        })}
         
         {widgets.length === 0 && (
           <div className="col-span-12 h-64 flex flex-col items-center justify-center border-2 border-dashed rounded-lg">
