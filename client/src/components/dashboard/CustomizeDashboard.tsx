@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -8,75 +8,43 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Plus, X } from 'lucide-react';
+import { 
+  Plus, 
+  X, 
+  Search, 
+  Filter, 
+  BarChart, 
+  LineChart, 
+  PieChart, 
+  Activity
+} from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useDashboard, Widget } from '@/contexts/DashboardContext';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import {
+  Tabs as TabsComponent,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
-// Define available widgets based on the image
-const availableWidgetDefinitions = [
-  {
-    id: 'kpi',
-    name: 'Key Performance Indicators',
-    description: 'AHT, CSAT, FCR, etc.',
-    type: 'value',
-    size: 'small'
-  },
-  {
-    id: 'call-volume',
-    name: 'Call Volume Chart',
-    description: 'Line chart of call volumes',
-    type: 'chart',
-    chartType: 'line',
-    size: 'medium'
-  },
-  {
-    id: 'sentiment',
-    name: 'Sentiment Analysis',
-    description: 'Pie chart of call sentiments',
-    type: 'chart',
-    chartType: 'pie',
-    size: 'medium'
-  },
-  {
-    id: 'mobile-banking',
-    name: 'Mobile Banking Metrics',
-    description: 'App usage and transaction stats',
-    type: 'chart',
-    chartType: 'bar',
-    size: 'medium'
-  },
-  {
-    id: 'ivr-flow',
-    name: 'IVR Flow Analysis',
-    description: 'Sankey diagram of IVR paths',
-    type: 'chart',
-    chartType: 'sankey',
-    size: 'large'
-  },
-  {
-    id: 'agent-performance',
-    name: 'Agent Performance',
-    description: 'Table of agent metrics',
-    type: 'table',
-    size: 'large'
-  },
-  {
-    id: 'key-phrases',
-    name: 'Key Phrases',
-    description: 'Word cloud of common phrases',
-    type: 'chart',
-    chartType: 'wordcloud',
-    size: 'medium'
-  },
-  {
-    id: 'alerts',
-    name: 'Recent Alerts',
-    description: 'System and KPI alerts',
-    type: 'list',
-    size: 'medium'
-  },
-];
+// Import the KPI definitions
+import { 
+  contactCenterCriticalKpis,
+  contactCenterMediumKpis,
+  contactCenterLowKpis,
+  mobileBankingCriticalKpis,
+  mobileBankingMediumKpis,
+  mobileBankingLowKpis,
+  allKpis
+} from '@/lib/kpiData';
 
 interface CustomizeDashboardProps {
   isOpen: boolean;
@@ -84,38 +52,71 @@ interface CustomizeDashboardProps {
 }
 
 interface DraggableWidgetProps {
-  name: string;
-  description: string;
+  kpi: KpiDefinition;
   onAdd: () => void;
 }
 
 // Individual widget option component
-const DraggableWidget: React.FC<DraggableWidgetProps> = ({ name, description, onAdd }) => {
+const DraggableWidget: React.FC<DraggableWidgetProps> = ({ kpi, onAdd }) => {
   const [isDragging, setIsDragging] = useState(false);
   const { currentTheme } = useTheme();
   
+  // Determine badge color based on priority
+  const priorityBadgeColor = {
+    critical: 'bg-red-100 text-red-800',
+    medium: 'bg-amber-100 text-amber-800',
+    low: 'bg-green-100 text-green-800'
+  }[kpi.priority];
+  
+  // Determine icon based on unit or type
+  const getIcon = () => {
+    if (kpi.unit.includes('%')) {
+      return <PieChart className="h-4 w-4 text-muted-foreground" />;
+    } else if (kpi.unit.includes('seconds') || kpi.unit.includes('milliseconds')) {
+      return <Activity className="h-4 w-4 text-muted-foreground" />;
+    } else if (kpi.unit.includes('users') || kpi.unit.includes('count')) {
+      return <BarChart className="h-4 w-4 text-muted-foreground" />;
+    } else {
+      return <LineChart className="h-4 w-4 text-muted-foreground" />;
+    }
+  };
+  
   return (
     <div 
-      className={`flex justify-between items-center p-4 border rounded-md mb-3 bg-white cursor-grab ${
+      className={`flex justify-between items-center p-3 border rounded-md mb-2 bg-white cursor-grab hover:border-primary/50 ${
         isDragging ? 'opacity-50' : ''
       }`}
       draggable 
       onDragStart={(e) => {
         setIsDragging(true);
-        e.dataTransfer.setData('text/plain', name);
+        e.dataTransfer.setData('text/plain', kpi.id);
       }}
       onDragEnd={() => setIsDragging(false)}
     >
-      <div>
-        <h3 className="font-medium text-sm">{name}</h3>
-        <p className="text-xs text-muted-foreground">{description}</p>
+      <div className="flex items-center">
+        <div className="mr-2">
+          {getIcon()}
+        </div>
+        <div>
+          <div className="flex items-center">
+            <h3 className="font-medium text-sm">{kpi.name}</h3>
+            <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${priorityBadgeColor}`}>
+              {kpi.priority}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground truncate max-w-[180px]">{kpi.description}</p>
+        </div>
       </div>
-      <button 
-        onClick={onAdd}
-        className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-muted"
-      >
-        <Plus className="h-4 w-4" />
-      </button>
+      <div className="flex items-center space-x-1">
+        <span className="text-xs text-muted-foreground">{kpi.unit}</span>
+        <button 
+          onClick={onAdd}
+          className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-muted"
+          title="Add to dashboard"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 };
@@ -125,6 +126,8 @@ const CustomizeDashboard: React.FC<CustomizeDashboardProps> = ({ isOpen, onClose
   const { toast } = useToast();
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'critical' | 'medium' | 'low'>('all');
   
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -139,28 +142,48 @@ const CustomizeDashboard: React.FC<CustomizeDashboardProps> = ({ isOpen, onClose
     e.preventDefault();
     setIsDragOver(false);
     
-    const widgetName = e.dataTransfer.getData('text/plain');
-    const widgetDef = availableWidgetDefinitions.find(w => w.name === widgetName);
+    const kpiId = e.dataTransfer.getData('text/plain');
+    const kpiDef = allKpis.find(k => k.id === kpiId);
     
-    if (widgetDef) {
-      addWidgetFromDefinition(widgetDef);
+    if (kpiDef) {
+      addWidgetFromKpi(kpiDef);
     }
   };
   
-  const addWidgetFromDefinition = (widgetDef: any) => {
+  const addWidgetFromKpi = (kpi: KpiDefinition) => {
+    // Determine widget type based on KPI characteristics
+    let widgetType: 'chart' | 'value' | 'table' | 'list' = 'value';
+    let chartType: 'bar' | 'line' | 'pie' | 'donut' | undefined = undefined;
+    
+    if (kpi.unit === '%') {
+      widgetType = 'chart';
+      chartType = 'pie';
+    } else if (kpi.unit.includes('seconds') || kpi.unit.includes('milliseconds')) {
+      widgetType = 'chart';
+      chartType = 'line';
+    } else if (kpi.name.toLowerCase().includes('rate') || kpi.name.toLowerCase().includes('trend')) {
+      widgetType = 'chart';
+      chartType = 'line';
+    } else if (kpi.unit.includes('users') || kpi.unit.includes('count')) {
+      widgetType = 'chart';
+      chartType = 'bar';
+    }
+    
     const newWidget: Widget = {
-      id: `widget-${widgetDef.id}-${Date.now()}`,
-      title: widgetDef.name,
-      type: widgetDef.type,
-      size: widgetDef.size,
-      chartType: widgetDef.chartType,
+      id: `widget-${kpi.id}-${Date.now()}`,
+      title: kpi.name,
+      type: widgetType,
+      size: kpi.priority === 'critical' ? 'medium' : 'small',
+      chartType: chartType,
+      kpiId: kpi.id,
+      sqlQuery: kpi.sqlQuery,
     };
     
     addWidget(newWidget);
     
     toast({
-      title: 'Widget added',
-      description: `${widgetDef.name} has been added to your dashboard.`,
+      title: 'KPI added',
+      description: `${kpi.name} has been added to your dashboard.`,
     });
   };
   
@@ -172,30 +195,144 @@ const CustomizeDashboard: React.FC<CustomizeDashboardProps> = ({ isOpen, onClose
     });
   };
   
+  // Filter KPIs based on search term and category
+  const filterKpis = (kpis: KpiDefinition[]) => {
+    return kpis.filter(kpi => {
+      const matchesSearch = searchTerm === '' || 
+        kpi.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        kpi.description.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesCategory = selectedCategory === 'all' || kpi.priority === selectedCategory;
+      
+      return matchesSearch && matchesCategory;
+    });
+  };
+  
+  const contactCenterKpis = [
+    ...contactCenterCriticalKpis,
+    ...contactCenterMediumKpis,
+    ...contactCenterLowKpis
+  ];
+  
+  const mobileBankingKpis = [
+    ...mobileBankingCriticalKpis,
+    ...mobileBankingMediumKpis,
+    ...mobileBankingLowKpis
+  ];
+  
+  const filteredContactCenterKpis = filterKpis(contactCenterKpis);
+  const filteredMobileBankingKpis = filterKpis(mobileBankingKpis);
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Customize Dashboard Layout</DialogTitle>
           <DialogDescription>
-            Drag and drop widgets to customize your dashboard layout
+            Drag and drop KPIs to customize your dashboard layout
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-1 overflow-auto py-4 flex gap-6">
-          {/* Available Widgets Column */}
-          <div className="w-[300px] flex-shrink-0">
-            <h3 className="font-medium mb-3">Available Widgets</h3>
-            <div className="space-y-1">
-              {availableWidgetDefinitions.map((widget) => (
-                <DraggableWidget
-                  key={widget.id}
-                  name={widget.name}
-                  description={widget.description}
-                  onAdd={() => addWidgetFromDefinition(widget)}
+        <div className="flex-1 overflow-hidden py-4 flex gap-6">
+          {/* Available KPIs Column */}
+          <div className="w-[350px] flex-shrink-0 flex flex-col h-full">
+            <div className="mb-4">
+              <div className="relative mb-2">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search KPIs..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
-              ))}
+              </div>
+              
+              <div className="flex items-center space-x-2 mb-2">
+                <button 
+                  onClick={() => setSelectedCategory('all')}
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    selectedCategory === 'all' 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  All
+                </button>
+                <button 
+                  onClick={() => setSelectedCategory('critical')}
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    selectedCategory === 'critical' 
+                      ? 'bg-red-500 text-white' 
+                      : 'bg-red-100 text-red-800'
+                  }`}
+                >
+                  Critical
+                </button>
+                <button 
+                  onClick={() => setSelectedCategory('medium')}
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    selectedCategory === 'medium' 
+                      ? 'bg-amber-500 text-white' 
+                      : 'bg-amber-100 text-amber-800'
+                  }`}
+                >
+                  Medium
+                </button>
+                <button 
+                  onClick={() => setSelectedCategory('low')}
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    selectedCategory === 'low' 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-green-100 text-green-800'
+                  }`}
+                >
+                  Low
+                </button>
+              </div>
             </div>
+            
+            <TabsComponent defaultValue="contact" className="flex-1 flex flex-col h-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="contact">Contact Center</TabsTrigger>
+                <TabsTrigger value="mobile">Mobile Banking</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="contact" className="flex-1 overflow-auto mt-2">
+                <div className="space-y-1">
+                  {filteredContactCenterKpis.length > 0 ? (
+                    filteredContactCenterKpis.map((kpi) => (
+                      <DraggableWidget
+                        key={kpi.id}
+                        kpi={kpi}
+                        onAdd={() => addWidgetFromKpi(kpi)}
+                      />
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      No KPIs match your search
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="mobile" className="flex-1 overflow-auto mt-2">
+                <div className="space-y-1">
+                  {filteredMobileBankingKpis.length > 0 ? (
+                    filteredMobileBankingKpis.map((kpi) => (
+                      <DraggableWidget
+                        key={kpi.id}
+                        kpi={kpi}
+                        onAdd={() => addWidgetFromKpi(kpi)}
+                      />
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      No KPIs match your search
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            </TabsComponent>
           </div>
           
           {/* Drop Zone Column */}
@@ -212,7 +349,8 @@ const CustomizeDashboard: React.FC<CustomizeDashboardProps> = ({ isOpen, onClose
               onDrop={handleDrop}
             >
               <div className="text-center text-muted-foreground">
-                <p>Drag widgets here to add them to your dashboard</p>
+                <p>Drag KPIs here to add them to your dashboard</p>
+                <p className="text-xs mt-2">KPIs will automatically select the appropriate visualization</p>
               </div>
             </div>
           </div>
