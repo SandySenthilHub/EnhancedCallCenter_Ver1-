@@ -1,138 +1,211 @@
 import React from 'react';
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
-} from "@/components/ui/accordion";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { Code } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { KpiDefinition } from '@/lib/localKpiData';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useTheme } from '@/contexts/ThemeContext';
+import { Widget } from '@/contexts/DashboardContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Database, Code, Info, BarChart, Activity } from 'lucide-react';
 
 interface KpiDetailsPanelProps {
-  kpi: KpiDefinition;
+  isOpen: boolean;
+  onClose: () => void;
+  kpi?: KpiDefinition;
+  widget?: Widget;
 }
 
-export function KpiDetailsPanel({ kpi }: KpiDetailsPanelProps) {
+// Syntax highlighting styles for SQL code
+const sqlStyles = {
+  keyword: 'text-blue-600 font-semibold',
+  function: 'text-amber-600',
+  table: 'text-green-600 font-semibold',
+  column: 'text-purple-600',
+  operator: 'text-red-600',
+  literal: 'text-cyan-600',
+  comment: 'text-gray-500 italic',
+  string: 'text-green-500',
+};
+
+// Simple SQL formatter/highlighter
+const formatSql = (sql: string) => {
+  if (!sql) return <span className="text-gray-500 italic">No SQL query available</span>;
+  
+  // Clean up multi-line SQL and extra spaces
+  const cleanedSql = sql.replace(/\\n/g, '\n').replace(/\s+/g, ' ').trim();
+  
+  // Basic SQL keyword highlighting - this is a simplistic approach
+  return cleanedSql.split(/\b/).map((token, i) => {
+    const lowerToken = token.toLowerCase();
+    
+    if (['select', 'from', 'where', 'join', 'on', 'group', 'by', 'order', 'having', 'and', 'or', 'as', 'case', 'when', 'then', 'else', 'end'].includes(lowerToken)) {
+      return <span key={i} className={sqlStyles.keyword}>{token}</span>;
+    } else if (['count', 'sum', 'avg', 'min', 'max', 'cast', 'convert', 'dateadd', 'datediff'].includes(lowerToken)) {
+      return <span key={i} className={sqlStyles.function}>{token}</span>;
+    } else if (lowerToken === 'null' || /^\d+$/.test(token)) {
+      return <span key={i} className={sqlStyles.literal}>{token}</span>;
+    } else if (['+', '-', '*', '/', '=', '<', '>', '>=', '<=', '<>'].includes(token)) {
+      return <span key={i} className={sqlStyles.operator}>{token}</span>;
+    } else {
+      return <span key={i}>{token}</span>;
+    }
+  });
+};
+
+const KpiDetailsPanel: React.FC<KpiDetailsPanelProps> = ({ isOpen, onClose, kpi, widget }) => {
   if (!kpi) return null;
 
-  const hasSqlDetails = Boolean(kpi.calculation || kpi.sourceTables || kpi.sourceSchema);
-
   return (
-    <Card className="w-full mb-4">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Code className="h-5 w-5" /> 
-          KPI Technical Details: {kpi.name}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {hasSqlDetails ? (
-          <Tabs defaultValue="calculation">
-            <TabsList>
-              <TabsTrigger value="calculation">SQL Calculation</TabsTrigger>
-              <TabsTrigger value="schema">Schema</TabsTrigger>
-              <TabsTrigger value="tables">Source Tables</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="calculation">
-              <Card>
-                <CardContent className="pt-4">
-                  <div className="bg-slate-100 p-4 rounded-md">
-                    <h4 className="text-sm font-semibold mb-2">SQL Query</h4>
-                    <ScrollArea className="h-[200px]">
-                      <pre className="font-mono text-xs text-slate-800 whitespace-pre-wrap">
-                        {kpi.calculation || "No SQL calculation defined"}
-                      </pre>
-                    </ScrollArea>
-                    
-                    {kpi.isRealTime !== undefined && (
-                      <div className="mt-4 flex items-center gap-2">
-                        <span className={`h-2 w-2 rounded-full ${kpi.isRealTime ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
-                        <span className="text-xs font-medium">
-                          {kpi.isRealTime ? 'Real-time KPI' : 'Batch-processed KPI'}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="schema">
-              <Card>
-                <CardContent className="pt-4">
-                  <div className="bg-slate-100 p-4 rounded-md">
-                    <h4 className="text-sm font-semibold mb-2">Database Schema</h4>
-                    <ScrollArea className="h-[200px]">
-                      <pre className="font-mono text-xs text-slate-800 whitespace-pre-wrap">
-                        {kpi.sourceSchema || "No schema information available"}
-                      </pre>
-                    </ScrollArea>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="tables">
-              <Card>
-                <CardContent className="pt-4">
-                  <div className="bg-slate-100 p-4 rounded-md">
-                    <h4 className="text-sm font-semibold mb-2">Source Tables</h4>
-                    {kpi.sourceTables && kpi.sourceTables.length > 0 ? (
-                      <ul className="list-disc list-inside space-y-1">
-                        {kpi.sourceTables.map((table, i) => (
-                          <li key={i} className="text-sm">{table}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-slate-600">No source tables information available</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <div className="p-4 bg-slate-100 rounded-md">
-            <p className="text-sm text-slate-600">No SQL details available for this KPI</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-export function KpiDetailsList({ kpis }: { kpis: KpiDefinition[] }) {
-  if (!kpis || kpis.length === 0) return null;
-  
-  return (
-    <div className="mt-6">
-      <h3 className="text-lg font-semibold mb-4">KPI Technical Details</h3>
-      <Accordion type="single" collapsible className="w-full">
-        {kpis.map((kpi, index) => (
-          <AccordionItem key={kpi.id} value={kpi.id}>
-            <AccordionTrigger className="hover:bg-slate-50 px-4">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{kpi.name}</span>
-                <span className="text-xs bg-slate-200 px-2 py-0.5 rounded">
-                  {kpi.priority}
-                </span>
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent className="sm:max-w-md md:max-w-xl overflow-y-auto">
+        <SheetHeader className="mb-6">
+          <SheetTitle className="text-xl flex items-center">
+            <Activity className="mr-2 h-5 w-5 text-primary" />
+            {kpi.name}
+            <span className={`ml-3 text-xs px-2 py-0.5 rounded-full ${
+              kpi.priority === 'critical' ? 'bg-red-100 text-red-800' :
+              kpi.priority === 'medium' ? 'bg-amber-100 text-amber-800' :
+              'bg-green-100 text-green-800'
+            }`}>
+              {kpi.priority}
+            </span>
+          </SheetTitle>
+          <SheetDescription>
+            {kpi.description}
+          </SheetDescription>
+        </SheetHeader>
+        
+        <Tabs defaultValue="info" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="info" className="flex items-center">
+              <Info className="h-4 w-4 mr-2" />
+              Details
+            </TabsTrigger>
+            <TabsTrigger value="data" className="flex items-center">
+              <Database className="h-4 w-4 mr-2" />
+              Data Source
+            </TabsTrigger>
+            <TabsTrigger value="sql" className="flex items-center">
+              <Code className="h-4 w-4 mr-2" />
+              SQL Query
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="info" className="mt-4">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground">KPI ID</h4>
+                  <p className="text-sm">{kpi.id}</p>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground">Category</h4>
+                  <p className="text-sm capitalize">{kpi.type.replace('_', ' ')}</p>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground">Unit</h4>
+                  <p className="text-sm">{kpi.unit}</p>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground">Real-time</h4>
+                  <p className="text-sm">{kpi.isRealTime ? 'Yes' : 'No'}</p>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground">Target</h4>
+                  <p className="text-sm">{kpi.target} {kpi.unit}</p>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground">Threshold</h4>
+                  <p className="text-sm">{kpi.threshold} {kpi.unit}</p>
+                </div>
               </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4">
-              <KpiDetailsPanel kpi={kpi} />
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
-    </div>
+              
+              <div className="mt-6">
+                <h4 className="text-sm font-medium mb-2">Performance Indicators</h4>
+                <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full ${
+                      kpi.target > kpi.threshold 
+                        ? 'bg-red-500' 
+                        : 'bg-green-500'
+                    }`}
+                    style={{ 
+                      width: `${Math.min(100, Math.random() * 100)}%` 
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className="text-xs text-muted-foreground">0</span>
+                  <span className="text-xs text-muted-foreground">
+                    {(kpi.target > kpi.threshold) 
+                      ? Math.max(kpi.target, kpi.threshold) * 1.5 
+                      : Math.max(kpi.target, kpi.threshold) * 0.5} {kpi.unit}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="data" className="mt-4">
+            <div className="space-y-4">
+              {kpi.sourceTables ? (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Source Tables</h4>
+                  <div className="space-y-1">
+                    {kpi.sourceTables.map((table, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <Database className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{table}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-muted-foreground text-sm">
+                  No data source information available
+                </div>
+              )}
+              
+              {kpi.sourceSchema && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium mb-2">Schema Definition</h4>
+                  <pre className="bg-gray-100 p-3 rounded-md text-xs overflow-auto max-h-40">
+                    {kpi.sourceSchema}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="sql" className="mt-4">
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium mb-2">Calculation Query</h4>
+              {kpi.calculation ? (
+                <pre className="bg-gray-100 p-3 rounded-md text-xs overflow-auto whitespace-pre-wrap max-h-60">
+                  {formatSql(kpi.calculation)}
+                </pre>
+              ) : (
+                <div className="text-muted-foreground text-sm">
+                  No SQL query available for this KPI
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+        
+        <div className="mt-6">
+          <Button className="w-full" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
-}
+};
+
+export default KpiDetailsPanel;

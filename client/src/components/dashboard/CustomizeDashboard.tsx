@@ -36,15 +36,25 @@ import {
 } from "@/components/ui/accordion"
 
 // Import the KPI definitions
-import { 
+import {
+  KpiDefinition,
   contactCenterCriticalKpis,
   contactCenterMediumKpis,
   contactCenterLowKpis,
   mobileBankingCriticalKpis,
   mobileBankingMediumKpis,
-  mobileBankingLowKpis,
-  allKpis
-} from '@/lib/kpiData';
+  mobileBankingLowKpis
+} from '@/lib/localKpiData';
+
+// Combine all KPIs for easy access
+const allKpis = [
+  ...contactCenterCriticalKpis,
+  ...contactCenterMediumKpis,
+  ...contactCenterLowKpis,
+  ...mobileBankingCriticalKpis,
+  ...mobileBankingMediumKpis,
+  ...mobileBankingLowKpis
+];
 
 interface CustomizeDashboardProps {
   isOpen: boolean;
@@ -143,7 +153,7 @@ const CustomizeDashboard: React.FC<CustomizeDashboardProps> = ({ isOpen, onClose
     setIsDragOver(false);
     
     const kpiId = e.dataTransfer.getData('text/plain');
-    const kpiDef = allKpis.find(k => k.id === kpiId);
+    const kpiDef = allKpis.find((k: KpiDefinition) => k.id === kpiId);
     
     if (kpiDef) {
       addWidgetFromKpi(kpiDef);
@@ -176,7 +186,7 @@ const CustomizeDashboard: React.FC<CustomizeDashboardProps> = ({ isOpen, onClose
       size: kpi.priority === 'critical' ? 'medium' : 'small',
       chartType: chartType,
       kpiId: kpi.id,
-      sqlQuery: kpi.sqlQuery,
+      sqlQuery: kpi.calculation,
     };
     
     addWidget(newWidget);

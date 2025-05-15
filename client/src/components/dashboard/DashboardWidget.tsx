@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MoreHorizontal, Maximize2, X, Move } from 'lucide-react';
+import { MoreHorizontal, Database, ExternalLink, Move, Maximize2 } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -8,6 +8,27 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/contexts/ThemeContext';
+import { Button } from '@/components/ui/button';
+import KpiDetailsPanel from '@/components/kpi/KpiDetailsPanel';
+import { 
+  KpiDefinition,
+  contactCenterCriticalKpis,
+  contactCenterMediumKpis,
+  contactCenterLowKpis,
+  mobileBankingCriticalKpis,
+  mobileBankingMediumKpis,
+  mobileBankingLowKpis
+} from '@/lib/localKpiData';
+
+// Combine all KPIs for easy access
+const allKpis = [
+  ...contactCenterCriticalKpis,
+  ...contactCenterMediumKpis,
+  ...contactCenterLowKpis,
+  ...mobileBankingCriticalKpis,
+  ...mobileBankingMediumKpis,
+  ...mobileBankingLowKpis
+];
 
 export interface WidgetProps {
   id: string;
@@ -19,6 +40,8 @@ export interface WidgetProps {
   onSizeChange: (id: string, size: 'small' | 'medium' | 'large' | 'full') => void;
   draggable?: boolean;
   onDragStart?: React.DragEventHandler<HTMLDivElement>;
+  kpiId?: string;
+  sqlQuery?: string;
 }
 
 const sizeClasses = {
