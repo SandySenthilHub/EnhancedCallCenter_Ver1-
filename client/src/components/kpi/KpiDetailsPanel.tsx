@@ -8,16 +8,16 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { KpiDefinition } from '@/lib/localKpiData';
-import { useTheme } from '@/contexts/ThemeContext';
 import { Widget } from '@/contexts/DashboardContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Database, Code, Info, BarChart, Activity } from 'lucide-react';
+import { Database, Code, Info, Activity } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface KpiDetailsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   kpi?: KpiDefinition;
-  widget?: Widget;
+  widget?: Partial<Widget>;
 }
 
 // Syntax highlighting styles for SQL code
@@ -153,32 +153,49 @@ const KpiDetailsPanel: React.FC<KpiDetailsPanelProps> = ({ isOpen, onClose, kpi,
           
           <TabsContent value="data" className="mt-4">
             <div className="space-y-4">
-              {kpi.sourceTables ? (
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Source Tables</h4>
-                  <div className="space-y-1">
-                    {kpi.sourceTables.map((table, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <Database className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{table}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-muted-foreground text-sm">
-                  No data source information available
-                </div>
-              )}
+              <div className="text-muted-foreground text-sm">
+                {kpi.type === 'contact_center' 
+                  ? 'Data sourced from Contact Center database tables'
+                  : 'Data sourced from Mobile Banking database tables'
+                }
+              </div>
               
-              {kpi.sourceSchema && (
-                <div className="mt-4">
-                  <h4 className="text-sm font-medium mb-2">Schema Definition</h4>
-                  <pre className="bg-gray-100 p-3 rounded-md text-xs overflow-auto max-h-40">
-                    {kpi.sourceSchema}
-                  </pre>
+              <div className="mt-4">
+                <h4 className="text-sm font-medium mb-2">Source Tables</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  {kpi.type === 'contact_center' ? (
+                    <>
+                      <div className="flex items-center space-x-2">
+                        <Database className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Calls</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Database className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Agents</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Database className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">CallTranscriptions</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center space-x-2">
+                        <Database className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">MobileTransactions</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Database className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">AppSessions</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Database className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">KpiMetrics</span>
+                      </div>
+                    </>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </TabsContent>
           
@@ -186,7 +203,7 @@ const KpiDetailsPanel: React.FC<KpiDetailsPanelProps> = ({ isOpen, onClose, kpi,
             <div className="space-y-4">
               <h4 className="text-sm font-medium mb-2">Calculation Query</h4>
               {kpi.calculation ? (
-                <pre className="bg-gray-100 p-3 rounded-md text-xs overflow-auto whitespace-pre-wrap max-h-60">
+                <pre className="bg-gray-100 p-3 rounded-md text-xs overflow-auto whitespace-pre-wrap max-h-60 dark:bg-gray-800">
                   {formatSql(kpi.calculation)}
                 </pre>
               ) : (
@@ -205,6 +222,56 @@ const KpiDetailsPanel: React.FC<KpiDetailsPanelProps> = ({ isOpen, onClose, kpi,
         </div>
       </SheetContent>
     </Sheet>
+  );
+};
+
+// List component for showing multiple KPIs
+interface KpiDetailsListProps {
+  kpis: KpiDefinition[];
+}
+
+export const KpiDetailsList: React.FC<KpiDetailsListProps> = ({ kpis }) => {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">KPI Details</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {kpis.map((kpi) => (
+          <div key={kpi.id} className="bg-card border rounded-lg p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-medium flex items-center">
+                <Activity className="h-4 w-4 mr-2 text-primary" />
+                {kpi.name}
+              </h4>
+              <Badge 
+                variant="outline" 
+                className={
+                  kpi.priority === 'critical' ? 'bg-red-100 text-red-800' :
+                  kpi.priority === 'medium' ? 'bg-amber-100 text-amber-800' :
+                  'bg-green-100 text-green-800'
+                }
+              >
+                {kpi.priority}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{kpi.description}</p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="text-muted-foreground">Target:</span> {kpi.target} {kpi.unit}
+              </div>
+              <div>
+                <span className="text-muted-foreground">Threshold:</span> {kpi.threshold} {kpi.unit}
+              </div>
+              <div>
+                <span className="text-muted-foreground">Real-time:</span> {kpi.isRealTime ? 'Yes' : 'No'}
+              </div>
+              <div>
+                <span className="text-muted-foreground">Type:</span> {kpi.type.replace('_', ' ')}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 

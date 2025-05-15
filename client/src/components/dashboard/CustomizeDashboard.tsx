@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -10,9 +10,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { 
   Plus, 
-  X, 
-  Search, 
-  Filter, 
   BarChart, 
   LineChart, 
   PieChart, 
@@ -21,19 +18,6 @@ import {
 import { useTheme } from '@/contexts/ThemeContext';
 import { useDashboard, Widget } from '@/contexts/DashboardContext';
 import { useToast } from '@/hooks/use-toast';
-import { Input } from '@/components/ui/input';
-import {
-  Tabs as TabsComponent,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
 
 // Import the KPI definitions
 import {
@@ -45,12 +29,26 @@ import {
   mobileBankingMediumKpis,
   mobileBankingLowKpis
 } from '@/lib/localKpiData';
+import KpiList from '@/components/kpi/KpiList';
 
 // Combine all KPIs for easy access
 const allKpis = [
   ...contactCenterCriticalKpis,
   ...contactCenterMediumKpis,
   ...contactCenterLowKpis,
+  ...mobileBankingCriticalKpis,
+  ...mobileBankingMediumKpis,
+  ...mobileBankingLowKpis
+];
+
+// Organize KPIs by type
+const contactCenterKpis = [
+  ...contactCenterCriticalKpis,
+  ...contactCenterMediumKpis,
+  ...contactCenterLowKpis
+];
+
+const mobileBankingKpis = [
   ...mobileBankingCriticalKpis,
   ...mobileBankingMediumKpis,
   ...mobileBankingLowKpis
@@ -136,8 +134,8 @@ const CustomizeDashboard: React.FC<CustomizeDashboardProps> = ({ isOpen, onClose
   const { toast } = useToast();
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'critical' | 'medium' | 'low'>('all');
+  // State for drag and drop handling
+  const [draggedKpi, setDraggedKpi] = useState<KpiDefinition | null>(null);
   
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -205,33 +203,15 @@ const CustomizeDashboard: React.FC<CustomizeDashboardProps> = ({ isOpen, onClose
     });
   };
   
-  // Filter KPIs based on search term and category
-  const filterKpis = (kpis: KpiDefinition[]) => {
-    return kpis.filter(kpi => {
-      const matchesSearch = searchTerm === '' || 
-        kpi.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        kpi.description.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesCategory = selectedCategory === 'all' || kpi.priority === selectedCategory;
-      
-      return matchesSearch && matchesCategory;
-    });
+  // We don't need a filter function anymore since KpiList handles filtering internally
+  
+  // No need to redefine these arrays as they're already defined at the top level
+  
+  // Handle KPI drag start from the KpiList component
+  const handleKpiDragStart = (kpi: KpiDefinition) => {
+    // Set the dragged KPI state for reference
+    setDraggedKpi(kpi);
   };
-  
-  const contactCenterKpis = [
-    ...contactCenterCriticalKpis,
-    ...contactCenterMediumKpis,
-    ...contactCenterLowKpis
-  ];
-  
-  const mobileBankingKpis = [
-    ...mobileBankingCriticalKpis,
-    ...mobileBankingMediumKpis,
-    ...mobileBankingLowKpis
-  ];
-  
-  const filteredContactCenterKpis = filterKpis(contactCenterKpis);
-  const filteredMobileBankingKpis = filterKpis(mobileBankingKpis);
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -246,103 +226,12 @@ const CustomizeDashboard: React.FC<CustomizeDashboardProps> = ({ isOpen, onClose
         <div className="flex-1 overflow-hidden py-4 flex gap-6">
           {/* Available KPIs Column */}
           <div className="w-[350px] flex-shrink-0 flex flex-col h-full">
-            <div className="mb-4">
-              <div className="relative mb-2">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search KPIs..."
-                  className="pl-8"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              
-              <div className="flex items-center space-x-2 mb-2">
-                <button 
-                  onClick={() => setSelectedCategory('all')}
-                  className={`text-xs px-2 py-1 rounded-full ${
-                    selectedCategory === 'all' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'bg-muted text-muted-foreground'
-                  }`}
-                >
-                  All
-                </button>
-                <button 
-                  onClick={() => setSelectedCategory('critical')}
-                  className={`text-xs px-2 py-1 rounded-full ${
-                    selectedCategory === 'critical' 
-                      ? 'bg-red-500 text-white' 
-                      : 'bg-red-100 text-red-800'
-                  }`}
-                >
-                  Critical
-                </button>
-                <button 
-                  onClick={() => setSelectedCategory('medium')}
-                  className={`text-xs px-2 py-1 rounded-full ${
-                    selectedCategory === 'medium' 
-                      ? 'bg-amber-500 text-white' 
-                      : 'bg-amber-100 text-amber-800'
-                  }`}
-                >
-                  Medium
-                </button>
-                <button 
-                  onClick={() => setSelectedCategory('low')}
-                  className={`text-xs px-2 py-1 rounded-full ${
-                    selectedCategory === 'low' 
-                      ? 'bg-green-500 text-white' 
-                      : 'bg-green-100 text-green-800'
-                  }`}
-                >
-                  Low
-                </button>
-              </div>
-            </div>
-            
-            <TabsComponent defaultValue="contact" className="flex-1 flex flex-col h-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="contact">Contact Center</TabsTrigger>
-                <TabsTrigger value="mobile">Mobile Banking</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="contact" className="flex-1 overflow-auto mt-2">
-                <div className="space-y-1">
-                  {filteredContactCenterKpis.length > 0 ? (
-                    filteredContactCenterKpis.map((kpi) => (
-                      <DraggableWidget
-                        key={kpi.id}
-                        kpi={kpi}
-                        onAdd={() => addWidgetFromKpi(kpi)}
-                      />
-                    ))
-                  ) : (
-                    <div className="text-center py-4 text-muted-foreground">
-                      No KPIs match your search
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="mobile" className="flex-1 overflow-auto mt-2">
-                <div className="space-y-1">
-                  {filteredMobileBankingKpis.length > 0 ? (
-                    filteredMobileBankingKpis.map((kpi) => (
-                      <DraggableWidget
-                        key={kpi.id}
-                        kpi={kpi}
-                        onAdd={() => addWidgetFromKpi(kpi)}
-                      />
-                    ))
-                  ) : (
-                    <div className="text-center py-4 text-muted-foreground">
-                      No KPIs match your search
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-            </TabsComponent>
+            {/* Use our new KpiList component */}
+            <KpiList 
+              contactCenterKpis={contactCenterKpis}
+              mobileBankingKpis={mobileBankingKpis}
+              onKpiDragStart={handleKpiDragStart}
+            />
           </div>
           
           {/* Drop Zone Column */}

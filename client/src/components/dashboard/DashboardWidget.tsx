@@ -60,10 +60,23 @@ const DashboardWidget: React.FC<WidgetProps> = ({
   onRemove,
   onSizeChange,
   draggable = false,
-  onDragStart
+  onDragStart,
+  kpiId,
+  sqlQuery
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [kpiDetails, setKpiDetails] = useState<KpiDefinition | undefined>(undefined);
   const { currentTheme } = useTheme();
+  
+  useEffect(() => {
+    if (kpiId) {
+      const kpi = allKpis.find(k => k.id === kpiId);
+      if (kpi) {
+        setKpiDetails(kpi);
+      }
+    }
+  }, [kpiId]);
   
   const handleRemove = () => {
     onRemove(id);
@@ -72,10 +85,14 @@ const DashboardWidget: React.FC<WidgetProps> = ({
   const handleSizeChange = (newSize: 'small' | 'medium' | 'large' | 'full') => {
     onSizeChange(id, newSize);
   };
+  
+  const openDetails = () => {
+    setIsDetailsOpen(true);
+  };
 
   return (
     <Card 
-      className={`shadow-sm transition-all duration-200 h-full ${isHovered ? 'ring-1 ring-primary/30' : ''}`}
+      className={`shadow-sm transition-all duration-200 h-full relative ${isHovered ? 'ring-1 ring-primary/30' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       draggable={draggable}
@@ -99,6 +116,12 @@ const DashboardWidget: React.FC<WidgetProps> = ({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
+            {kpiId && (
+              <DropdownMenuItem onClick={openDetails} className="text-primary">
+                <Database className="h-4 w-4 mr-2" />
+                View Details
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => handleSizeChange('small')}>
               Small
             </DropdownMenuItem>
@@ -120,6 +143,38 @@ const DashboardWidget: React.FC<WidgetProps> = ({
       <CardContent className="p-4 h-[calc(100%-50px)]">
         {children}
       </CardContent>
+
+      {/* Add details button for KPI widgets */}
+      {kpiId && kpiDetails && (
+        <div className="absolute bottom-3 right-3">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-7 w-7 p-0 rounded-full bg-background/60 backdrop-blur-sm"
+            onClick={openDetails}
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            <span className="sr-only">View KPI Details</span>
+          </Button>
+        </div>
+      )}
+
+      {/* KPI Details Panel */}
+      {kpiDetails && (
+        <KpiDetailsPanel 
+          isOpen={isDetailsOpen} 
+          onClose={() => setIsDetailsOpen(false)} 
+          kpi={kpiDetails}
+          widget={{
+            id,
+            title,
+            type,
+            size,
+            sqlQuery,
+            kpiId
+          }}
+        />
+      )}
     </Card>
   );
 };
