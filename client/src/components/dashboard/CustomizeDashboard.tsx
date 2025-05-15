@@ -1,170 +1,180 @@
-import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
+import React, { useState, useRef } from 'react';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  DialogFooter
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useDashboard, Widget } from '@/contexts/DashboardContext';
+import { useToast } from '@/hooks/use-toast';
 
-// Define the widget types
-interface WidgetDefinition {
-  id: string;
-  name: string;
-  description: string;
-  type: string;
-}
-
-// Available widgets for the dashboard
-const availableWidgets: WidgetDefinition[] = [
+// Define available widgets based on the image
+const availableWidgetDefinitions = [
   {
-    id: 'key-performance',
+    id: 'kpi',
     name: 'Key Performance Indicators',
     description: 'AHT, CSAT, FCR, etc.',
-    type: 'kpi',
+    type: 'value',
+    size: 'small'
   },
   {
     id: 'call-volume',
     name: 'Call Volume Chart',
     description: 'Line chart of call volumes',
     type: 'chart',
+    chartType: 'line',
+    size: 'medium'
   },
   {
-    id: 'sentiment-analysis',
+    id: 'sentiment',
     name: 'Sentiment Analysis',
     description: 'Pie chart of call sentiments',
     type: 'chart',
+    chartType: 'pie',
+    size: 'medium'
   },
   {
     id: 'mobile-banking',
     name: 'Mobile Banking Metrics',
     description: 'App usage and transaction stats',
-    type: 'metrics',
+    type: 'chart',
+    chartType: 'bar',
+    size: 'medium'
   },
   {
     id: 'ivr-flow',
     name: 'IVR Flow Analysis',
     description: 'Sankey diagram of IVR paths',
-    type: 'flow',
+    type: 'chart',
+    chartType: 'sankey',
+    size: 'large'
   },
   {
     id: 'agent-performance',
     name: 'Agent Performance',
     description: 'Table of agent metrics',
     type: 'table',
+    size: 'large'
   },
   {
     id: 'key-phrases',
     name: 'Key Phrases',
     description: 'Word cloud of common phrases',
-    type: 'cloud',
+    type: 'chart',
+    chartType: 'wordcloud',
+    size: 'medium'
   },
   {
-    id: 'recent-alerts',
+    id: 'alerts',
     name: 'Recent Alerts',
     description: 'System and KPI alerts',
-    type: 'alerts',
+    type: 'list',
+    size: 'medium'
   },
 ];
 
 interface CustomizeDashboardProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (layout: string[]) => void;
-  currentLayout?: string[];
 }
 
-export function CustomizeDashboard({
-  isOpen,
-  onClose,
-  onSave,
-  currentLayout = []
-}: CustomizeDashboardProps) {
-  const [selectedWidgets, setSelectedWidgets] = useState<string[]>(currentLayout);
-  const [draggedWidget, setDraggedWidget] = useState<string | null>(null);
+interface DraggableWidgetProps {
+  name: string;
+  description: string;
+  onAdd: () => void;
+}
 
-  // Add a widget to the dashboard
-  const addWidget = (widgetId: string) => {
-    if (!selectedWidgets.includes(widgetId)) {
-      setSelectedWidgets([...selectedWidgets, widgetId]);
-    }
-  };
-
-  // Remove a widget from the dashboard
-  const removeWidget = (widgetId: string) => {
-    setSelectedWidgets(selectedWidgets.filter(id => id !== widgetId));
-  };
-
-  // Handle drag start
-  const handleDragStart = (e: React.DragEvent, widgetId: string) => {
-    setDraggedWidget(widgetId);
-    e.dataTransfer.setData('widgetId', widgetId);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  // Handle drag over
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  // Handle drop
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const widgetId = e.dataTransfer.getData('widgetId');
-    
-    // If the widget is not already in the selected widgets, add it
-    if (!selectedWidgets.includes(widgetId)) {
-      addWidget(widgetId);
-    }
-    
-    setDraggedWidget(null);
-  };
-
-  // Handle save
-  const handleSave = () => {
-    onSave(selectedWidgets);
-    onClose();
-  };
-
-  // Reset to default layout
-  const resetToDefault = () => {
-    setSelectedWidgets(['key-performance', 'call-volume', 'sentiment-analysis', 'agent-performance']);
-  };
-
-  // Render a widget item in the available widgets list
-  const renderWidgetItem = (widget: WidgetDefinition) => {
-    const isSelected = selectedWidgets.includes(widget.id);
-    
-    return (
-      <div
-        key={widget.id}
-        className="flex items-center justify-between p-4 mb-2 bg-white border rounded-md shadow-sm"
-        draggable
-        onDragStart={(e) => handleDragStart(e, widget.id)}
-      >
-        <div className="flex-1">
-          <h3 className="text-sm font-medium">{widget.name}</h3>
-          <p className="text-xs text-muted-foreground">{widget.description}</p>
-        </div>
-        <Button
-          size="sm"
-          variant={isSelected ? "secondary" : "ghost"}
-          className="ml-2"
-          onClick={() => isSelected ? removeWidget(widget.id) : addWidget(widget.id)}
-        >
-          <Plus className={`h-4 w-4 ${isSelected ? 'rotate-45' : ''}`} />
-        </Button>
+// Individual widget option component
+const DraggableWidget: React.FC<DraggableWidgetProps> = ({ name, description, onAdd }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const { currentTheme } = useTheme();
+  
+  return (
+    <div 
+      className={`flex justify-between items-center p-4 border rounded-md mb-3 bg-white cursor-grab ${
+        isDragging ? 'opacity-50' : ''
+      }`}
+      draggable 
+      onDragStart={(e) => {
+        setIsDragging(true);
+        e.dataTransfer.setData('text/plain', name);
+      }}
+      onDragEnd={() => setIsDragging(false)}
+    >
+      <div>
+        <h3 className="font-medium text-sm">{name}</h3>
+        <p className="text-xs text-muted-foreground">{description}</p>
       </div>
-    );
-  };
+      <button 
+        onClick={onAdd}
+        className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-muted"
+      >
+        <Plus className="h-4 w-4" />
+      </button>
+    </div>
+  );
+};
 
+const CustomizeDashboard: React.FC<CustomizeDashboardProps> = ({ isOpen, onClose }) => {
+  const { addWidget } = useDashboard();
+  const { toast } = useToast();
+  const dropZoneRef = useRef<HTMLDivElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+  
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+  
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const widgetName = e.dataTransfer.getData('text/plain');
+    const widgetDef = availableWidgetDefinitions.find(w => w.name === widgetName);
+    
+    if (widgetDef) {
+      addWidgetFromDefinition(widgetDef);
+    }
+  };
+  
+  const addWidgetFromDefinition = (widgetDef: any) => {
+    const newWidget: Widget = {
+      id: `widget-${widgetDef.id}-${Date.now()}`,
+      title: widgetDef.name,
+      type: widgetDef.type,
+      size: widgetDef.size,
+      chartType: widgetDef.chartType,
+    };
+    
+    addWidget(newWidget);
+    
+    toast({
+      title: 'Widget added',
+      description: `${widgetDef.name} has been added to your dashboard.`,
+    });
+  };
+  
+  const handleReset = () => {
+    // Logic to reset dashboard to default
+    toast({
+      title: 'Dashboard reset',
+      description: 'Your dashboard has been reset to default layout.',
+    });
+  };
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Customize Dashboard Layout</DialogTitle>
           <DialogDescription>
@@ -172,74 +182,58 @@ export function CustomizeDashboard({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex flex-col md:flex-row gap-4 mt-4">
+        <div className="flex-1 overflow-auto py-4 flex gap-6">
           {/* Available Widgets Column */}
-          <div className="w-full md:w-1/3">
-            <h3 className="text-sm font-medium mb-3">Available Widgets</h3>
-            <div className="space-y-2">
-              {availableWidgets.map(renderWidgetItem)}
+          <div className="w-[300px] flex-shrink-0">
+            <h3 className="font-medium mb-3">Available Widgets</h3>
+            <div className="space-y-1">
+              {availableWidgetDefinitions.map((widget) => (
+                <DraggableWidget
+                  key={widget.id}
+                  name={widget.name}
+                  description={widget.description}
+                  onAdd={() => addWidgetFromDefinition(widget)}
+                />
+              ))}
             </div>
           </div>
           
-          {/* Dashboard Layout Column */}
-          <div 
-            className="w-full md:w-2/3 border border-dashed rounded-md p-4 min-h-[400px] flex items-center justify-center"
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-          >
-            {selectedWidgets.length === 0 ? (
+          {/* Drop Zone Column */}
+          <div className="flex-1">
+            <div
+              ref={dropZoneRef}
+              className={`border-2 ${
+                isDragOver 
+                  ? 'border-primary border-solid' 
+                  : 'border-dashed'
+              } rounded-md h-full p-4 flex items-center justify-center`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
               <div className="text-center text-muted-foreground">
                 <p>Drag widgets here to add them to your dashboard</p>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                {selectedWidgets.map(widgetId => {
-                  const widget = availableWidgets.find(w => w.id === widgetId);
-                  if (!widget) return null;
-                  
-                  return (
-                    <div 
-                      key={widget.id}
-                      className="bg-white border rounded-md p-4 shadow-sm"
-                    >
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-sm font-medium">{widget.name}</h3>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => removeWidget(widget.id)}
-                        >
-                          <Plus className="h-4 w-4 rotate-45" />
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">{widget.description}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            </div>
           </div>
         </div>
         
-        <DialogFooter className="gap-2">
-          <Button 
-            variant="outline" 
-            onClick={resetToDefault}
-            className="mr-auto"
-          >
+        <DialogFooter className="flex justify-between">
+          <Button variant="outline" onClick={handleReset}>
             Reset to Default
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={onClose}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleSave}>
-            Save Changes
-          </Button>
+          <div>
+            <Button variant="outline" onClick={onClose} className="mr-2">
+              Cancel
+            </Button>
+            <Button onClick={onClose}>
+              Save Layout
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+export default CustomizeDashboard;
