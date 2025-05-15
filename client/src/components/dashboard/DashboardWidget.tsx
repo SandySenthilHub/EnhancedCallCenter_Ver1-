@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MoreHorizontal, Database, ExternalLink, Move, Maximize2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { MoreHorizontal, Database, ExternalLink, Move } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -43,13 +43,6 @@ export interface WidgetProps {
   kpiId?: string;
   sqlQuery?: string;
 }
-
-const sizeClasses = {
-  small: 'col-span-12 md:col-span-3',
-  medium: 'col-span-12 md:col-span-6',
-  large: 'col-span-12 md:col-span-9',
-  full: 'col-span-12'
-};
 
 const DashboardWidget: React.FC<WidgetProps> = ({
   id,
@@ -99,48 +92,57 @@ const DashboardWidget: React.FC<WidgetProps> = ({
       onDragStart={onDragStart}
       data-widget-id={id}
     >
-      <CardHeader className="px-4 py-3 flex flex-row items-center justify-between border-b">
-        <div className="flex items-center">
-          {draggable && (
-            <div className="mr-2 cursor-move opacity-70 hover:opacity-100">
-              <Move className="h-4 w-4" />
+      <CardHeader className="px-4 py-3 border-b">
+        <div className="flex flex-col">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center">
+              {draggable && (
+                <div className="mr-2 cursor-move opacity-70 hover:opacity-100">
+                  <Move className="h-4 w-4" />
+                </div>
+              )}
+              <CardTitle className="text-sm font-medium">{title}</CardTitle>
             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted">
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="sr-only">Widget menu</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                {kpiId && (
+                  <DropdownMenuItem onClick={openDetails} className="text-primary">
+                    <Database className="h-4 w-4 mr-2" />
+                    View Details
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={() => handleSizeChange('small')}>
+                  Small
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSizeChange('medium')}>
+                  Medium
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSizeChange('large')}>
+                  Large
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSizeChange('full')}>
+                  Full Width
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleRemove} className="text-destructive">
+                  Remove
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          {kpiDetails && (
+            <CardDescription className="text-xs mt-1 line-clamp-2">
+              {kpiDetails.description}
+            </CardDescription>
           )}
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted">
-              <MoreHorizontal className="h-4 w-4" />
-              <span className="sr-only">Widget menu</span>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            {kpiId && (
-              <DropdownMenuItem onClick={openDetails} className="text-primary">
-                <Database className="h-4 w-4 mr-2" />
-                View Details
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={() => handleSizeChange('small')}>
-              Small
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSizeChange('medium')}>
-              Medium
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSizeChange('large')}>
-              Large
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSizeChange('full')}>
-              Full Width
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleRemove} className="text-destructive">
-              Remove
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </CardHeader>
-      <CardContent className="p-4 h-[calc(100%-50px)]">
+      <CardContent className="p-4 h-[calc(100%-75px)]">
         {children}
       </CardContent>
 

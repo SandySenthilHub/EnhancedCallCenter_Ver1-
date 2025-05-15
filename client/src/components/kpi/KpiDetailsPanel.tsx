@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -10,8 +10,20 @@ import { Button } from "@/components/ui/button";
 import { KpiDefinition } from '@/lib/localKpiData';
 import { Widget } from '@/contexts/DashboardContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Database, Code, Info, Activity } from 'lucide-react';
+import { Database, Code, Info, Activity, LineChart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { generateYearlyKpiData } from '@/lib/yearlyDataGenerator';
+import {
+  LineChart as RechartsLineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+} from 'recharts';
 
 interface KpiDetailsPanelProps {
   isOpen: boolean;
@@ -58,6 +70,16 @@ const formatSql = (sql: string) => {
 };
 
 const KpiDetailsPanel: React.FC<KpiDetailsPanelProps> = ({ isOpen, onClose, kpi, widget }) => {
+  const [yearlyData, setYearlyData] = useState<any | null>(null);
+  
+  useEffect(() => {
+    if (kpi) {
+      // Generate a full year of data for this KPI
+      const data = generateYearlyKpiData(kpi, 1); // Using tenantId 1
+      setYearlyData(data);
+    }
+  }, [kpi]);
+
   if (!kpi) return null;
 
   return (
@@ -81,10 +103,14 @@ const KpiDetailsPanel: React.FC<KpiDetailsPanelProps> = ({ isOpen, onClose, kpi,
         </SheetHeader>
         
         <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="info" className="flex items-center">
               <Info className="h-4 w-4 mr-2" />
               Details
+            </TabsTrigger>
+            <TabsTrigger value="chart" className="flex items-center">
+              <LineChart className="h-4 w-4 mr-2" />
+              Annual Data
             </TabsTrigger>
             <TabsTrigger value="data" className="flex items-center">
               <Database className="h-4 w-4 mr-2" />
