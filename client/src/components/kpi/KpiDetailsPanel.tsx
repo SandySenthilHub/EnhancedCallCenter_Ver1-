@@ -230,7 +230,7 @@ interface KpiDetailsListProps {
   kpis: KpiDefinition[];
 }
 
-export const KpiDetailsList: React.FC<KpiDetailsListProps> = ({ kpis }) => {
+const KpiDetailsList: React.FC<KpiDetailsListProps> = ({ kpis }) => {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">KPI Details</h3>
@@ -274,5 +274,8 @@ export const KpiDetailsList: React.FC<KpiDetailsListProps> = ({ kpis }) => {
     </div>
   );
 };
+
+// Make sure to export both components explicitly
+export { KpiDetailsPanel, KpiDetailsList };
 
 export default KpiDetailsPanel;
