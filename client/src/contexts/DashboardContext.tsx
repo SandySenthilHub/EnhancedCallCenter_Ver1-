@@ -131,6 +131,14 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
       setWidgets(activeDashboard.widgets);
     }
   }, [activeDashboard]);
+  
+  // Auto-save dashboards whenever they change
+  useEffect(() => {
+    if (dashboards.length > 0) {
+      localStorage.setItem('user-dashboards', JSON.stringify(dashboards));
+      console.log('Dashboard configuration saved to local storage');
+    }
+  }, [dashboards]);
 
   // Add a new widget
   const addWidget = (widget: Widget) => {
