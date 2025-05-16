@@ -10,6 +10,7 @@ export interface Widget {
   chartType?: 'bar' | 'line' | 'pie' | 'donut';
   position?: number;
   sqlQuery?: string;
+  createdAt?: string;
   layoutInfo?: {
     x: number;
     y: number;

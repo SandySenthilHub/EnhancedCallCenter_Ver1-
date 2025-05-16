@@ -82,20 +82,48 @@ const AddWidgetDialog: React.FC<AddWidgetDialogProps> = ({ isOpen, onClose }) =>
   });
   
   function onSubmit(data: WidgetFormValues) {
+    // For KPI widgets, get the full KPI details to include in widget title if needed
+    let finalTitle = data.title;
+    let widgetType = data.type;
+    
+    // If this is a KPI widget with no custom title, use the KPI name
+    if (data.kpiId && (!data.title || data.title.trim() === '')) {
+      // Find the KPI definition
+      const allKpis = [
+        ...contactCenterCriticalKpis,
+        ...contactCenterMediumKpis,
+        ...contactCenterLowKpis,
+        ...mobileBankingCriticalKpis,
+        ...mobileBankingMediumKpis,
+        ...mobileBankingLowKpis
+      ];
+      
+      const kpi = allKpis.find(k => k.id === data.kpiId);
+      if (kpi) {
+        finalTitle = kpi.name;
+        // Force value type for KPI widgets for better visualization
+        if (data.type !== 'chart') {
+          widgetType = 'value';
+        }
+      }
+    }
+    
     const newWidget: Widget = {
       id: `widget-${Date.now()}`,
-      title: data.title,
-      type: data.type,
+      title: finalTitle,
+      type: widgetType,
       size: data.size,
       kpiId: data.kpiId,
       chartType: data.chartType,
+      // Add timestamp to track when the widget was created
+      createdAt: new Date().toISOString(),
     };
     
     addWidget(newWidget);
     
     toast({
       title: "Widget added",
-      description: `${data.title} widget has been added to your dashboard`,
+      description: `${finalTitle} widget has been added to your dashboard`,
     });
     
     form.reset();
