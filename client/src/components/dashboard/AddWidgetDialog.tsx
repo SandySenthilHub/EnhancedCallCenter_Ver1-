@@ -254,8 +254,6 @@ const AddWidgetDialog: React.FC<AddWidgetDialogProps> = ({ isOpen, onClose }) =>
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="max-h-[300px]">
-                      <SelectItem value="" disabled>Select a KPI</SelectItem>
-                      
                       {/* Contact Center Critical KPIs */}
                       <div className="px-2 py-1.5 text-xs font-semibold">Contact Center - Critical</div>
                       {contactCenterCriticalKpis.slice(0, 10).map(kpi => (
