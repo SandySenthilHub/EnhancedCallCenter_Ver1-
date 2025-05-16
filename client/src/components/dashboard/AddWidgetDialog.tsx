@@ -31,6 +31,14 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { BarChart3, PieChart, LineChart, Table } from 'lucide-react';
+import { 
+  contactCenterCriticalKpis,
+  contactCenterMediumKpis,
+  contactCenterLowKpis,
+  mobileBankingCriticalKpis,
+  mobileBankingMediumKpis,
+  mobileBankingLowKpis
+} from '@/lib/localKpiData';
 
 // Define form schema
 const widgetFormSchema = z.object({
@@ -43,14 +51,14 @@ const widgetFormSchema = z.object({
 
 type WidgetFormValues = z.infer<typeof widgetFormSchema>;
 
-// Mock KPI data for selection
-const mockKpis = [
-  { id: 'cc-aht', name: 'Average Handle Time', type: 'contact_center', priority: 'critical' },
-  { id: 'cc-fcr', name: 'First Call Resolution', type: 'contact_center', priority: 'critical' },
-  { id: 'cc-csat', name: 'Customer Satisfaction', type: 'contact_center', priority: 'critical' },
-  { id: 'mb-dau', name: 'Daily Active Users', type: 'mobile_banking', priority: 'critical' },
-  { id: 'mb-tpd', name: 'Transactions Per Day', type: 'mobile_banking', priority: 'critical' },
-  { id: 'mb-ctr', name: 'Click-Through Rate', type: 'mobile_banking', priority: 'medium' },
+// Combine all KPI definitions for selection
+const allKpis = [
+  ...contactCenterCriticalKpis.slice(0, 5),  // Take first 5 from each category for better UI
+  ...contactCenterMediumKpis.slice(0, 5),
+  ...contactCenterLowKpis.slice(0, 5),
+  ...mobileBankingCriticalKpis.slice(0, 5),
+  ...mobileBankingMediumKpis.slice(0, 5),
+  ...mobileBankingLowKpis.slice(0, 5),
 ];
 
 interface AddWidgetDialogProps {
@@ -245,8 +253,36 @@ const AddWidgetDialog: React.FC<AddWidgetDialogProps> = ({ isOpen, onClose }) =>
                         <SelectValue placeholder="Select KPI" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      {mockKpis.map(kpi => (
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="" disabled>Select a KPI</SelectItem>
+                      
+                      {/* Contact Center Critical KPIs */}
+                      <div className="px-2 py-1.5 text-xs font-semibold">Contact Center - Critical</div>
+                      {contactCenterCriticalKpis.slice(0, 10).map(kpi => (
+                        <SelectItem key={kpi.id} value={kpi.id}>
+                          {kpi.name}
+                        </SelectItem>
+                      ))}
+                      
+                      {/* Contact Center Medium KPIs */}
+                      <div className="px-2 py-1.5 text-xs font-semibold mt-2">Contact Center - Medium</div>
+                      {contactCenterMediumKpis.slice(0, 10).map(kpi => (
+                        <SelectItem key={kpi.id} value={kpi.id}>
+                          {kpi.name}
+                        </SelectItem>
+                      ))}
+                      
+                      {/* Mobile Banking Critical KPIs */}
+                      <div className="px-2 py-1.5 text-xs font-semibold mt-2">Mobile Banking - Critical</div>
+                      {mobileBankingCriticalKpis.slice(0, 10).map(kpi => (
+                        <SelectItem key={kpi.id} value={kpi.id}>
+                          {kpi.name}
+                        </SelectItem>
+                      ))}
+                      
+                      {/* Mobile Banking Medium KPIs */}
+                      <div className="px-2 py-1.5 text-xs font-semibold mt-2">Mobile Banking - Medium</div>
+                      {mobileBankingMediumKpis.slice(0, 10).map(kpi => (
                         <SelectItem key={kpi.id} value={kpi.id}>
                           {kpi.name}
                         </SelectItem>
