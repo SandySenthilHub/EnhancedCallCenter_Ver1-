@@ -120,58 +120,275 @@ export function generateYearlyKpiData(kpi: KpiDefinition, tenantId: number): Kpi
   // Start date (one year ago)
   const startDate = subDays(today, daysInYear);
   
-  // Generate trend direction (weighted more towards 'up' for positive metrics)
-  const trendOptions: Array<'up' | 'down' | 'flat'> = ['up', 'down', 'flat'];
-  const trendWeights = kpi.name.includes('Rate') || kpi.name.includes('Score') ? [0.6, 0.2, 0.2] : [0.4, 0.4, 0.2];
-  
-  // Randomly select trend based on weights
+  // KPI-specific patterns based on KPI ID and name
   let trend: 'up' | 'down' | 'flat' = 'flat';
-  const randomValue = Math.random();
-  let cumulativeWeight = 0;
-  for (let i = 0; i < trendOptions.length; i++) {
-    cumulativeWeight += trendWeights[i];
-    if (randomValue <= cumulativeWeight) {
-      trend = trendOptions[i];
-      break;
+  let trendStrength = 0.0003; // Default subtle trend
+  let seasonalityPeriod = kpi.type === 'contact_center' ? 7 : 30; // Default: Weekly for call center, monthly for mobile
+  let seasonalityAmplitude = 0.15; // Default seasonality strength
+  let volatility = 0.05; // Default volatility
+  
+  // Determine appropriate patterns based on KPI type and ID
+  if (kpi.type === 'contact_center') {
+    // Contact center specific patterns
+    if (kpi.id.includes('aht') || kpi.id.includes('handle_time')) {
+      // Average handle time typically trends down over time due to efficiency improvements
+      trend = 'down';
+      trendStrength = 0.0002;
+      seasonalityPeriod = 5; // Business week cycle
+      volatility = 0.08; // Higher volatility in handle times
+    } 
+    else if (kpi.id.includes('csat') || kpi.id.includes('satisfaction')) {
+      // Customer satisfaction scores often show small improvements over time
+      trend = 'up';
+      trendStrength = 0.0001; // Very subtle improvement
+      seasonalityPeriod = 30; // Monthly patterns
+      volatility = 0.03; // Relatively stable
+    }
+    else if (kpi.id.includes('abandon') || kpi.id.includes('drop')) {
+      // Abandon rates often show spikes during peak times
+      trend = 'flat'; // General trend is flat
+      seasonalityPeriod = 7; // Weekly cycle
+      seasonalityAmplitude = 0.25; // Strong seasonality
+      volatility = 0.15; // High volatility
+    }
+    else if (kpi.id.includes('sentiment')) {
+      // Sentiment tends to be stable with occasional dips
+      trend = 'flat';
+      seasonalityPeriod = 90; // Quarterly patterns
+      volatility = 0.07;
+    }
+    else if (kpi.id.includes('occupancy') || kpi.id.includes('utilization')) {
+      // Agent occupancy often has weekly patterns
+      trend = 'flat';
+      seasonalityPeriod = 7; // Weekly cycle
+      seasonalityAmplitude = 0.20; // Strong weekly pattern
+    }
+  } 
+  else if (kpi.type === 'mobile_banking') {
+    // Mobile banking specific patterns
+    if (kpi.id.includes('login') || kpi.id.includes('success')) {
+      // Login success rates typically improve over time
+      trend = 'up';
+      trendStrength = 0.0001;
+      volatility = 0.02; // Very stable
+    }
+    else if (kpi.id.includes('transaction') || kpi.id.includes('tx')) {
+      // Transaction volumes often increase over time
+      trend = 'up';
+      trendStrength = 0.0005; // Strong growth
+      seasonalityPeriod = 30; // Monthly cycle (payday effects)
+      seasonalityAmplitude = 0.30; // Strong monthly pattern
+    }
+    else if (kpi.id.includes('active_users') || kpi.id.includes('dau')) {
+      // Active users typically grow with occasional plateaus
+      trend = 'up';
+      trendStrength = 0.0004;
+      seasonalityPeriod = 7; // Weekly cycle (weekday vs weekend)
+      seasonalityAmplitude = 0.15;
+    }
+    else if (kpi.id.includes('crash') || kpi.id.includes('error')) {
+      // Crashes should trend down over time
+      trend = 'down';
+      trendStrength = 0.0003;
+      volatility = 0.20; // High volatility
+    }
+    else if (kpi.id.includes('session') || kpi.id.includes('duration')) {
+      // Session durations often increase over time
+      trend = 'up';
+      trendStrength = 0.0002;
+      seasonalityPeriod = 7; // Weekly
     }
   }
   
   // Determine if this is a metric where "up" is good or bad
-  const upIsGood = !kpi.name.includes('Wait') && 
-                   !kpi.name.includes('Duration') && 
-                   !kpi.name.includes('Time') &&
-                   !kpi.name.includes('Error');
+  const upIsGood = !kpi.name.toLowerCase().includes('wait') && 
+                   !kpi.name.toLowerCase().includes('duration') && 
+                   !kpi.name.toLowerCase().includes('time') &&
+                   !kpi.name.toLowerCase().includes('error') &&
+                   !kpi.name.toLowerCase().includes('abandon') &&
+                   !kpi.name.toLowerCase().includes('crash');
   
   // Generate special events (like holidays or promotions)
   const specialEvents = [];
-  // Major holidays (approximate days from start of year)
-  const holidays = [1, 45, 105, 170, 220, 300, 359]; // New Year, Valentine's, Easter, Independence Day, Labor Day, Thanksgiving, Christmas
+  
+  // Major holidays with realistic multipliers based on KPI type
+  const holidays = [
+    { day: 1, name: "New Year's Day" },
+    { day: 45, name: "Valentine's Day" },
+    { day: 105, name: "Easter" },
+    { day: 170, name: "Independence Day" },
+    { day: 220, name: "Labor Day" },
+    { day: 300, name: "Thanksgiving" },
+    { day: 359, name: "Christmas" }
+  ];
+  
   for (const holiday of holidays) {
+    let multiplier = 1.0;
+    
+    // Custom multipliers based on KPI type and holiday
+    if (kpi.type === 'contact_center') {
+      // Contact center volumes increase on holidays
+      if (kpi.id.includes('call_volume') || kpi.id.includes('volume')) {
+        multiplier = holiday.name === "Christmas" || holiday.name === "New Year's Day" ? 2.0 : 1.6;
+      }
+      // Wait times increase on busy holidays
+      else if (kpi.id.includes('wait') || kpi.id.includes('handle')) {
+        multiplier = holiday.name === "Christmas" || holiday.name === "New Year's Day" ? 1.8 : 1.4;
+      }
+      // Customer satisfaction decreases slightly on busy days
+      else if (kpi.id.includes('satisfaction') || kpi.id.includes('csat')) {
+        multiplier = holiday.name === "Christmas" || holiday.name === "New Year's Day" ? 0.9 : 0.95;
+      }
+      // Abandon rates increase on busy days
+      else if (kpi.id.includes('abandon')) {
+        multiplier = holiday.name === "Christmas" ? 1.7 : 1.3;
+      } 
+      else {
+        multiplier = 1.5; // Default for contact center metrics
+      }
+    } 
+    else if (kpi.type === 'mobile_banking') {
+      // Mobile banking usage drops on major holidays
+      if (kpi.id.includes('active') || kpi.id.includes('login')) {
+        multiplier = holiday.name === "Christmas" || holiday.name === "New Year's Day" ? 0.6 : 0.8;
+      }
+      // Transactions spike before some holidays and drop during
+      else if (kpi.id.includes('transaction') || kpi.id.includes('tx')) {
+        // Transactions spike before Christmas but drop during
+        if (holiday.name === "Christmas") {
+          // Add a pre-holiday spike 2 days before
+          specialEvents.push({
+            day: holiday.day - 2,
+            multiplier: 1.8,
+            name: "Pre-Christmas Shopping"
+          });
+          multiplier = 0.7; // Drop during the holiday
+        } 
+        else if (holiday.name === "Valentine's Day" || holiday.name === "Independence Day") {
+          // Add pre-holiday spike one day before
+          specialEvents.push({
+            day: holiday.day - 1,
+            multiplier: 1.4,
+            name: `Pre-${holiday.name} Activity`
+          });
+          multiplier = 0.8;
+        } 
+        else {
+          multiplier = 0.7;
+        }
+      }
+      // Mobile app crashes might increase slightly due to high load before holidays
+      else if (kpi.id.includes('crash') || kpi.id.includes('error')) {
+        if (holiday.name === "Christmas" || holiday.name === "New Year's Day") {
+          specialEvents.push({
+            day: holiday.day - 1,
+            multiplier: 1.5,
+            name: `Pre-${holiday.name} High Load`
+          });
+        }
+        multiplier = 1.1;
+      } 
+      else {
+        multiplier = 0.7; // Default for mobile banking metrics
+      }
+    }
+    
     specialEvents.push({
-      day: holiday,
-      // For contact center, holidays mean more calls (higher values)
-      // For mobile banking, holidays could mean less usage
-      multiplier: kpi.type === 'contact_center' ? 1.5 : 0.7
+      day: holiday.day,
+      multiplier: multiplier,
+      name: holiday.name
     });
   }
   
-  // Special promotional days (random days with spikes)
-  for (let i = 0; i < 5; i++) {
-    specialEvents.push({
-      day: Math.floor(Math.random() * daysInYear),
-      multiplier: 1.3 + Math.random() * 0.7 // Random multiplier between 1.3 and 2.0
-    });
+  // Add monthly payroll days with appropriate effects
+  for (let month = 0; month < 12; month++) {
+    const paydayOffset = 15 + (month * 30); // ~15th of each month
+    if (paydayOffset <= daysInYear) {
+      const paydayEffect = {
+        day: paydayOffset,
+        multiplier: 1.0,
+        name: `Month ${month + 1} Payday`
+      };
+      
+      // Custom multiplier based on KPI type
+      if (kpi.type === 'mobile_banking') {
+        if (kpi.id.includes('transaction') || kpi.id.includes('tx')) {
+          paydayEffect.multiplier = 1.9; // Strong spike in transactions
+        } 
+        else if (kpi.id.includes('active') || kpi.id.includes('login')) {
+          paydayEffect.multiplier = 1.6; // More users log in
+        } 
+        else {
+          paydayEffect.multiplier = 1.4; // Default increase
+        }
+      } 
+      else if (kpi.type === 'contact_center') {
+        if (kpi.id.includes('volume')) {
+          paydayEffect.multiplier = 1.5; // More calls
+        } 
+        else if (kpi.id.includes('handle') || kpi.id.includes('aht')) {
+          paydayEffect.multiplier = 1.3; // Longer handle time
+        } 
+        else if (kpi.id.includes('wait')) {
+          paydayEffect.multiplier = 1.4; // Longer wait times
+        } 
+        else {
+          paydayEffect.multiplier = 1.2; // Default increase
+        }
+      }
+      
+      specialEvents.push(paydayEffect);
+    }
   }
+  
+  // Add quarterly financial events (Tax seasons, quarterly reporting)
+  const quarterlyEvents = [90, 180, 270, 360]; // End of quarters
+  for (const day of quarterlyEvents) {
+    if (day <= daysInYear) {
+      const quarterEvent = {
+        day: day,
+        multiplier: 1.0,
+        name: `Q${Math.ceil(day/90)} End`
+      };
+      
+      if (kpi.type === 'mobile_banking') {
+        if (kpi.id.includes('transaction')) {
+          quarterEvent.multiplier = 1.4;
+        }
+      } 
+      else if (kpi.type === 'contact_center') {
+        if (kpi.id.includes('volume')) {
+          quarterEvent.multiplier = 1.5;
+        }
+      }
+      
+      specialEvents.push(quarterEvent);
+      
+      // Add pre-quarter end peaks (7 days before quarter end)
+      if (day > 7) {
+        specialEvents.push({
+          day: day - 7,
+          multiplier: 1.3,
+          name: `Pre-Q${Math.ceil(day/90)} Activity`
+        });
+      }
+    }
+  }
+  
+  // Filter out any duplicate days and sort by day
+  const uniqueEvents = specialEvents.filter((event, index, self) => 
+    index === self.findIndex(e => e.day === event.day)
+  ).sort((a, b) => a.day - b.day);
   
   // Generate a smooth sequence of values for the year
   const values = generateSmoothSequence(daysInYear, kpi.target, {
     trend,
-    trendStrength: 0.0003, // Subtle trend over a year
+    trendStrength,
     seasonality: true,
-    seasonalityPeriod: kpi.type === 'contact_center' ? 7 : 30, // Weekly for call center, monthly for mobile
-    seasonalityAmplitude: 0.15,
-    volatility: 0.05,
-    specialEvents
+    seasonalityPeriod,
+    seasonalityAmplitude,
+    volatility,
+    specialEvents: uniqueEvents
   });
   
   // Convert to time series format
