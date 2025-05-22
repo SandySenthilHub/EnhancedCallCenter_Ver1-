@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { generateYearlyKpiData, KpiWithHistory } from '@/lib/yearlyDataGenerator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowDown, ArrowRight, ArrowUp, Activity } from 'lucide-react';
+import { KpiDetailsPanel } from '@/components/kpi/KpiDetailsPanel';
 import {
   AreaChart,
   Area,
@@ -31,6 +32,7 @@ const KpiWidget: React.FC<KpiWidgetProps> = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const [kpiData, setKpiData] = useState<KpiWithHistory | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     // Generate synthetic data for this KPI
@@ -96,6 +98,11 @@ const KpiWidget: React.FC<KpiWidgetProps> = ({
     return kpiData.historicalData.slice(-30);
   };
 
+  // Handle drill-down to show detailed view
+  const handleDrillDown = () => {
+    setShowDetails(true);
+  };
+
   return (
     <DashboardWidget
       id={id}
@@ -142,7 +149,7 @@ const KpiWidget: React.FC<KpiWidgetProps> = ({
             </div>
           </div>
           
-          <div className="flex-grow">
+          <div className="flex-grow cursor-pointer group" onClick={() => handleDrillDown()}>
             <ResponsiveContainer width="100%" height="100%" minHeight={60}>
               <AreaChart data={getRecentData()} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <defs>
@@ -151,6 +158,25 @@ const KpiWidget: React.FC<KpiWidgetProps> = ({
                     <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
                   </linearGradient>
                 </defs>
+                <Tooltip 
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-white p-2 border rounded shadow-lg text-xs">
+                          <p className="font-medium">{label}</p>
+                          <p className="text-blue-600">
+                            Value: {formatValue(payload[0].value, kpiDefinition.unit)}
+                          </p>
+                          <p className="text-gray-600">
+                            Target: {formatValue(kpiDefinition.target, kpiDefinition.unit)}
+                          </p>
+                          <p className="text-orange-600 mt-1">Click to drill down</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
                 <Area 
                   type="monotone" 
                   dataKey="value" 
@@ -160,6 +186,9 @@ const KpiWidget: React.FC<KpiWidgetProps> = ({
                 />
               </AreaChart>
             </ResponsiveContainer>
+            <div className="text-xs text-center text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+              Click chart to drill down and see full year data
+            </div>
           </div>
         </div>
       ) : (
