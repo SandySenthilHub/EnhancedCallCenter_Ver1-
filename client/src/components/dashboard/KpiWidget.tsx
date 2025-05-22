@@ -104,99 +104,111 @@ const KpiWidget: React.FC<KpiWidgetProps> = ({
   };
 
   return (
-    <DashboardWidget
-      id={id}
-      title={title}
-      type="value"
-      size={size}
-      onRemove={onRemove}
-      onSizeChange={onSizeChange}
-      draggable={draggable}
-      onDragStart={onDragStart}
-      kpiId={kpiDefinition.id}
-      sqlQuery={kpiDefinition.calculation}
-    >
-      {loading ? (
-        <div className="flex flex-col space-y-4 h-full justify-center items-center">
-          <Skeleton className="h-8 w-28" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-20 w-full" />
-        </div>
-      ) : kpiData ? (
-        <div className="flex flex-col h-full">
-          <div className="flex items-baseline justify-between mb-2">
-            <div className="text-2xl font-bold">
-              {formatValue(kpiData.currentValue, kpiDefinition.unit)}
+    <>
+      <DashboardWidget
+        id={id}
+        title={title}
+        type="value"
+        size={size}
+        onRemove={onRemove}
+        onSizeChange={onSizeChange}
+        draggable={draggable}
+        onDragStart={onDragStart}
+        kpiId={kpiDefinition.id}
+        sqlQuery={kpiDefinition.calculation}
+      >
+        {loading ? (
+          <div className="flex flex-col space-y-4 h-full justify-center items-center">
+            <Skeleton className="h-8 w-28" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+        ) : kpiData ? (
+          <div className="flex flex-col h-full">
+            <div className="flex items-baseline justify-between mb-2">
+              <div className="text-2xl font-bold">
+                {formatValue(kpiData.currentValue, kpiDefinition.unit)}
+              </div>
+              
+              {kpiData.trend !== 'flat' && (
+                <div className={`flex items-center ${getTrendIndicator(kpiData.trend, kpiData.trendPercentage).color}`}>
+                  {getTrendIndicator(kpiData.trend, kpiData.trendPercentage).icon}
+                  <span className="text-xs ml-1">
+                    {getTrendIndicator(kpiData.trend, kpiData.trendPercentage).text}
+                  </span>
+                </div>
+              )}
             </div>
             
-            {kpiData.trend !== 'flat' && (
-              <div className={`flex items-center ${getTrendIndicator(kpiData.trend, kpiData.trendPercentage).color}`}>
-                {getTrendIndicator(kpiData.trend, kpiData.trendPercentage).icon}
-                <span className="text-xs ml-1">
-                  {getTrendIndicator(kpiData.trend, kpiData.trendPercentage).text}
+            <div className="text-xs text-muted-foreground mb-4">
+              <div className="flex items-center">
+                <Activity className="h-3 w-3 mr-1" />
+                <span>
+                  Target: {kpiDefinition.target} {kpiDefinition.unit} / 
+                  Threshold: {kpiDefinition.threshold} {kpiDefinition.unit}
                 </span>
               </div>
-            )}
-          </div>
-          
-          <div className="text-xs text-muted-foreground mb-4">
-            <div className="flex items-center">
-              <Activity className="h-3 w-3 mr-1" />
-              <span>
-                Target: {kpiDefinition.target} {kpiDefinition.unit} / 
-                Threshold: {kpiDefinition.threshold} {kpiDefinition.unit}
-              </span>
+            </div>
+            
+            <div className="flex-grow cursor-pointer group" onClick={() => handleDrillDown()}>
+              <ResponsiveContainer width="100%" height="100%" minHeight={60}>
+                <AreaChart data={getRecentData()} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id={`gradient-${id}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
+                    </linearGradient>
+                  </defs>
+                  <Tooltip 
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        const value = payload[0]?.value;
+                        return (
+                          <div className="bg-white p-2 border rounded shadow-lg text-xs">
+                            <p className="font-medium">{label}</p>
+                            <p className="text-blue-600">
+                              Value: {formatValue(Number(value || 0), kpiDefinition.unit)}
+                            </p>
+                            <p className="text-gray-600">
+                              Target: {formatValue(kpiDefinition.target, kpiDefinition.unit)}
+                            </p>
+                            <p className="text-orange-600 mt-1">Click to drill down</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke="#8884d8" 
+                    fill={`url(#gradient-${id})`} 
+                    strokeWidth={1.5}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+              <div className="text-xs text-center text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                Click chart to drill down and see full year data
+              </div>
             </div>
           </div>
-          
-          <div className="flex-grow cursor-pointer group" onClick={() => handleDrillDown()}>
-            <ResponsiveContainer width="100%" height="100%" minHeight={60}>
-              <AreaChart data={getRecentData()} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id={`gradient-${id}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
-                  </linearGradient>
-                </defs>
-                <Tooltip 
-                  content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div className="bg-white p-2 border rounded shadow-lg text-xs">
-                          <p className="font-medium">{label}</p>
-                          <p className="text-blue-600">
-                            Value: {formatValue(payload[0].value, kpiDefinition.unit)}
-                          </p>
-                          <p className="text-gray-600">
-                            Target: {formatValue(kpiDefinition.target, kpiDefinition.unit)}
-                          </p>
-                          <p className="text-orange-600 mt-1">Click to drill down</p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#8884d8" 
-                  fill={`url(#gradient-${id})`} 
-                  strokeWidth={1.5}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-            <div className="text-xs text-center text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-              Click chart to drill down and see full year data
-            </div>
+        ) : (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            No data available
           </div>
-        </div>
-      ) : (
-        <div className="flex items-center justify-center h-full text-muted-foreground">
-          No data available
-        </div>
+        )}
+      </DashboardWidget>
+      
+      {/* Drill-down Details Panel */}
+      {showDetails && kpiData && (
+        <KpiDetailsPanel
+          kpi={kpiData}
+          isOpen={showDetails}
+          onClose={() => setShowDetails(false)}
+        />
       )}
-    </DashboardWidget>
+    </>
   );
 };
 
