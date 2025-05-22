@@ -9,7 +9,8 @@ import {
   Brain,
   Settings,
   ChevronDown,
-  LayoutGrid
+  LayoutGrid,
+  LineChart
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
@@ -64,6 +65,12 @@ const Sidebar: React.FC = () => {
           <a className={`flex items-center p-2 rounded-md ${isActive('/kpi-dashboard') ? 'bg-primary-50 text-primary-600' : 'text-neutral-500 hover:bg-neutral-50'} group`}>
             <LayoutGrid className="h-5 w-5" />
             <span className="ml-3 hidden md:block">KPI Dashboard</span>
+          </a>
+        </Link>
+        <Link href="/chart-dashboard">
+          <a className={`flex items-center p-2 rounded-md ${isActive('/chart-dashboard') ? 'bg-primary-50 text-primary-600' : 'text-neutral-500 hover:bg-neutral-50'} group`}>
+            <LineChart className="h-5 w-5" />
+            <span className="ml-3 hidden md:block">Chart Dashboard</span>
           </a>
         </Link>
         <Link href="/settings">
