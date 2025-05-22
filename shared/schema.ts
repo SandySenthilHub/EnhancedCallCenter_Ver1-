@@ -210,19 +210,15 @@ export type InsertAlert = z.infer<typeof insertAlertSchema>;
 
 // ===== CALL CENTER INTELLIGENCE TABLES =====
 
-// Calls table - Core call data with audio paths
-export const calls = pgTable("calls", {
+// Enhanced Calls table with AI features - extends existing calls table
+export const aiCalls = pgTable("ai_calls", {
   id: serial("id").primaryKey(),
   callId: text("call_id").notNull().unique(),
   tenantId: integer("tenant_id").notNull(),
   agentId: integer("agent_id"),
   customerId: text("customer_id"),
-  startTime: timestamp("start_time").notNull(),
-  endTime: timestamp("end_time"),
-  duration: integer("duration"), // in seconds
   audioPath: text("audio_path"),
   status: text("status").notNull(), // 'active', 'completed', 'abandoned'
-  callType: text("call_type"), // 'inbound', 'outbound'
   queueName: text("queue_name"),
   phoneNumber: text("phone_number"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -323,7 +319,7 @@ export const speakerSegments = pgTable("speaker_segments", {
 
 // ===== INSERT SCHEMAS =====
 
-export const insertCallSchema = createInsertSchema(calls);
+export const insertAiCallSchema = createInsertSchema(aiCalls);
 export const insertTranscriptSchema = createInsertSchema(transcripts);
 export const insertSentimentAnalysisSchema = createInsertSchema(sentimentAnalysis);
 export const insertQualityCheckSchema = createInsertSchema(qualityChecks);
@@ -333,8 +329,8 @@ export const insertSpeakerSegmentSchema = createInsertSchema(speakerSegments);
 
 // ===== TYPE EXPORTS =====
 
-export type Call = typeof calls.$inferSelect;
-export type InsertCall = z.infer<typeof insertCallSchema>;
+export type AiCall = typeof aiCalls.$inferSelect;
+export type InsertAiCall = z.infer<typeof insertAiCallSchema>;
 
 export type Transcript = typeof transcripts.$inferSelect;
 export type InsertTranscript = z.infer<typeof insertTranscriptSchema>;
