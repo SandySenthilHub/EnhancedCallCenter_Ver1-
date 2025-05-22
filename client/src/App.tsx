@@ -16,6 +16,7 @@ import CognitiveServices from "./pages/CognitiveServices";
 import Settings from "./pages/Settings";
 import KpiDashboard from "./pages/KpiDashboard";
 import SimpleChartView from "./pages/SimpleChartView";
+import AIPlaybook from "./pages/AIPlaybook";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/cognitive-services" component={CognitiveServices} />
       <Route path="/kpi-dashboard" component={KpiDashboard} />
       <Route path="/chart-dashboard" component={SimpleChartView} />
+      <Route path="/ai-playbook" component={AIPlaybook} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>

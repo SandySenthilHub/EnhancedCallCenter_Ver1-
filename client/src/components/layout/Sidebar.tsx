@@ -10,7 +10,8 @@ import {
   Settings,
   ChevronDown,
   LayoutGrid,
-  LineChart
+  LineChart,
+  Cpu
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
@@ -71,6 +72,12 @@ const Sidebar: React.FC = () => {
           <a className={`flex items-center p-2 rounded-md ${isActive('/chart-dashboard') ? 'bg-primary-50 text-primary-600' : 'text-neutral-500 hover:bg-neutral-50'} group`}>
             <LineChart className="h-5 w-5" />
             <span className="ml-3 hidden md:block">Chart Dashboard</span>
+          </a>
+        </Link>
+        <Link href="/ai-playbook">
+          <a className={`flex items-center p-2 rounded-md ${isActive('/ai-playbook') ? 'bg-primary-50 text-primary-600' : 'text-neutral-500 hover:bg-neutral-50'} group`}>
+            <Cpu className="h-5 w-5" />
+            <span className="ml-3 hidden md:block">AI/ML Playbook</span>
           </a>
         </Link>
         <Link href="/settings">
