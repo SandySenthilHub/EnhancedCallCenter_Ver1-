@@ -37,75 +37,120 @@ import {
 const Sidebar: React.FC = () => {
   const [location] = useLocation();
   const { currentTenant, tenants, setCurrentTenant } = useAuth();
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    analytics: true,
+    admin: false,
+    system: false
+  });
 
   const isActive = (path: string) => {
     return location === path;
   };
 
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  const menuSections = [
+    {
+      id: 'analytics',
+      title: 'Banking Analytics',
+      icon: TrendingUp,
+      items: [
+        { path: '/', label: 'Dashboard Overview', icon: BarChartBig },
+        { path: '/contact-center', label: 'Contact Center', icon: Phone },
+        { path: '/mobile-banking', label: 'Mobile Banking', icon: Smartphone },
+        { path: '/ivr-analytics', label: 'IVR Analytics', icon: Network },
+        { path: '/cognitive-services', label: 'Cognitive Services', icon: Brain },
+        { path: '/kpi-dashboard', label: 'KPI Dashboard', icon: LayoutGrid },
+        { path: '/chart-dashboard', label: 'Chart Dashboard', icon: LineChart },
+        { path: '/ai-playbook', label: 'AI/ML Playbook', icon: Cpu },
+      ]
+    },
+    {
+      id: 'admin',
+      title: 'Administration',
+      icon: Crown,
+      items: [
+        { path: '/admin/users', label: 'User Management', icon: Users },
+        { path: '/admin/teams', label: 'Teams', icon: UserCheck },
+        { path: '/admin/roles', label: 'Roles & Permissions', icon: Shield },
+        { path: '/admin/tenants', label: 'Tenant Management', icon: Building2 },
+        { path: '/admin/entities', label: 'Entity Framework', icon: Database },
+        { path: '/admin/workflows', label: 'Workflow Management', icon: Workflow },
+        { path: '/admin/companies', label: 'Companies', icon: Building },
+        { path: '/admin/transactions', label: 'Transaction Center', icon: CreditCard },
+      ]
+    },
+    {
+      id: 'system',
+      title: 'System Management',
+      icon: Settings,
+      items: [
+        { path: '/system/countries', label: 'Countries & Regions', icon: Globe },
+        { path: '/system/currencies', label: 'Currency Management', icon: CreditCard },
+        { path: '/system/languages', label: 'Languages', icon: Languages },
+        { path: '/system/monitoring', label: 'System Health', icon: Activity },
+        { path: '/system/audit', label: 'Audit Logs', icon: FileText },
+        { path: '/system/alerts', label: 'Alert Management', icon: AlertTriangle },
+        { path: '/system/inbox', label: 'Workflow Inbox', icon: Briefcase },
+        { path: '/settings', label: 'System Settings', icon: Settings },
+      ]
+    }
+  ];
+
   return (
-    <aside className="w-16 md:w-64 bg-white border-r border-neutral-100 flex flex-col">
+    <aside className="w-16 md:w-72 bg-white border-r border-neutral-100 flex flex-col">
       {/* Logo */}
       <div className="h-16 flex items-center justify-center md:justify-start px-4 border-b border-neutral-100">
-        <div className="hidden md:block text-xl font-semibold text-primary-600">Analytics Hub</div>
-        <div className="block md:hidden text-xl font-semibold text-primary-600">A</div>
+        <div className="hidden md:block text-xl font-semibold text-primary-600">Banking Admin Hub</div>
+        <div className="block md:hidden text-xl font-semibold text-primary-600">BA</div>
       </div>
       
       {/* Navigation Menu */}
-      <nav className="flex-1 p-2 md:p-4 space-y-1">
-        <Link href="/">
-          <a className={`flex items-center p-2 rounded-md ${isActive('/') ? 'bg-primary-50 text-primary-600' : 'text-neutral-500 hover:bg-neutral-50'} group`}>
-            <BarChartBig className="h-5 w-5" />
-            <span className="ml-3 hidden md:block">Dashboard</span>
-          </a>
-        </Link>
-        <Link href="/contact-center">
-          <a className={`flex items-center p-2 rounded-md ${isActive('/contact-center') ? 'bg-primary-50 text-primary-600' : 'text-neutral-500 hover:bg-neutral-50'} group`}>
-            <Phone className="h-5 w-5" />
-            <span className="ml-3 hidden md:block">Contact Center</span>
-          </a>
-        </Link>
-        <Link href="/mobile-banking">
-          <a className={`flex items-center p-2 rounded-md ${isActive('/mobile-banking') ? 'bg-primary-50 text-primary-600' : 'text-neutral-500 hover:bg-neutral-50'} group`}>
-            <Smartphone className="h-5 w-5" />
-            <span className="ml-3 hidden md:block">Mobile Banking</span>
-          </a>
-        </Link>
-        <Link href="/ivr-analytics">
-          <a className={`flex items-center p-2 rounded-md ${isActive('/ivr-analytics') ? 'bg-primary-50 text-primary-600' : 'text-neutral-500 hover:bg-neutral-50'} group`}>
-            <Network className="h-5 w-5" />
-            <span className="ml-3 hidden md:block">IVR Analytics</span>
-          </a>
-        </Link>
-        <Link href="/cognitive-services">
-          <a className={`flex items-center p-2 rounded-md ${isActive('/cognitive-services') ? 'bg-primary-50 text-primary-600' : 'text-neutral-500 hover:bg-neutral-50'} group`}>
-            <Brain className="h-5 w-5" />
-            <span className="ml-3 hidden md:block">Cognitive Services</span>
-          </a>
-        </Link>
-        <Link href="/kpi-dashboard">
-          <a className={`flex items-center p-2 rounded-md ${isActive('/kpi-dashboard') ? 'bg-primary-50 text-primary-600' : 'text-neutral-500 hover:bg-neutral-50'} group`}>
-            <LayoutGrid className="h-5 w-5" />
-            <span className="ml-3 hidden md:block">KPI Dashboard</span>
-          </a>
-        </Link>
-        <Link href="/chart-dashboard">
-          <a className={`flex items-center p-2 rounded-md ${isActive('/chart-dashboard') ? 'bg-primary-50 text-primary-600' : 'text-neutral-500 hover:bg-neutral-50'} group`}>
-            <LineChart className="h-5 w-5" />
-            <span className="ml-3 hidden md:block">Chart Dashboard</span>
-          </a>
-        </Link>
-        <Link href="/ai-playbook">
-          <a className={`flex items-center p-2 rounded-md ${isActive('/ai-playbook') ? 'bg-primary-50 text-primary-600' : 'text-neutral-500 hover:bg-neutral-50'} group`}>
-            <Cpu className="h-5 w-5" />
-            <span className="ml-3 hidden md:block">AI/ML Playbook</span>
-          </a>
-        </Link>
-        <Link href="/settings">
-          <a className={`flex items-center p-2 rounded-md ${isActive('/settings') ? 'bg-primary-50 text-primary-600' : 'text-neutral-500 hover:bg-neutral-50'} group`}>
-            <Settings className="h-5 w-5" />
-            <span className="ml-3 hidden md:block">Settings</span>
-          </a>
-        </Link>
+      <nav className="flex-1 p-2 md:p-4 space-y-2 overflow-y-auto">
+        {menuSections.map((section) => (
+          <div key={section.id} className="space-y-1">
+            {/* Section Header */}
+            <button
+              onClick={() => toggleSection(section.id)}
+              className="w-full flex items-center justify-between p-2 text-neutral-700 hover:bg-neutral-50 rounded-md group"
+            >
+              <div className="flex items-center">
+                <section.icon className="h-5 w-5 text-neutral-500" />
+                <span className="ml-3 hidden md:block font-medium text-sm">{section.title}</span>
+              </div>
+              <div className="hidden md:block">
+                {expandedSections[section.id] ? (
+                  <ChevronDown className="h-4 w-4 text-neutral-400" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-neutral-400" />
+                )}
+              </div>
+            </button>
+
+            {/* Section Items */}
+            {expandedSections[section.id] && (
+              <div className="space-y-1 ml-4 md:ml-6">
+                {section.items.map((item) => (
+                  <Link key={item.path} href={item.path}>
+                    <a className={`flex items-center p-2 rounded-md text-sm ${
+                      isActive(item.path) 
+                        ? 'bg-primary-50 text-primary-600 border-r-2 border-primary-600' 
+                        : 'text-neutral-600 hover:bg-neutral-50'
+                    } group`}>
+                      <item.icon className="h-4 w-4" />
+                      <span className="ml-3 hidden md:block">{item.label}</span>
+                    </a>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
       </nav>
       
       {/* Tenant Selector */}
