@@ -73,10 +73,12 @@ const Sidebar: React.FC = () => {
       title: 'Contact Center',
       icon: Phone,
       items: [
-        { path: '/contact-center/dashboard', label: 'Contact Center Dashboard', icon: BarChartBig },
+        { path: '/contact-center/dashboard', label: 'Dashboard', icon: BarChartBig },
         { path: '/contact-center/analytics', label: 'Call Analytics', icon: Phone },
         { path: '/contact-center/agents', label: 'Agent Performance', icon: Users },
         { path: '/contact-center/quality', label: 'Quality Management', icon: Shield },
+        { path: '/contact-center/backend', label: 'Back End', icon: Database },
+        { path: '/contact-center/intelligence', label: 'Intelligence', icon: Brain },
       ]
     },
     {
@@ -101,28 +103,7 @@ const Sidebar: React.FC = () => {
         { path: '/ivr-analytics/optimization', label: 'Flow Optimization', icon: Target },
       ]
     },
-    {
-      id: 'backend',
-      title: 'Back End',
-      icon: Server,
-      items: [
-        { path: '/backend/overview', label: 'Backend Overview', icon: Database },
-        { path: '/backend/services', label: 'Microservices', icon: Server },
-        { path: '/backend/apis', label: 'API Management', icon: Globe },
-        { path: '/backend/infrastructure', label: 'Infrastructure', icon: Building },
-      ]
-    },
-    {
-      id: 'intelligence',
-      title: 'Intelligence',
-      icon: Brain,
-      items: [
-        { path: '/intelligence/overview', label: 'Intelligence Hub', icon: Brain },
-        { path: '/intelligence/models', label: 'AI Models', icon: Cpu },
-        { path: '/intelligence/insights', label: 'Business Insights', icon: TrendingUp },
-        { path: '/intelligence/predictions', label: 'Predictive Analytics', icon: Target },
-      ]
-    },
+
     {
       id: 'admin',
       title: 'Administration',
