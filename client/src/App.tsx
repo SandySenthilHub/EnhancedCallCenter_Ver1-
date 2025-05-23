@@ -38,13 +38,40 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/contact-center" component={ContactCenter} />
-      <Route path="/mobile-banking" component={MobileBanking} />
-      <Route path="/ivr-analytics" component={IvrAnalytics} />
-      <Route path="/cognitive-services" component={CognitiveServices} />
       <Route path="/kpi-dashboard" component={KpiDashboard} />
       <Route path="/chart-dashboard" component={SimpleChartView} />
+      <Route path="/cognitive-services" component={CognitiveServices} />
       <Route path="/ai-playbook" component={AIPlaybook} />
+      
+      {/* Contact Center Submenu */}
+      <Route path="/contact-center/dashboard" component={ContactCenter} />
+      <Route path="/contact-center/analytics" component={ContactCenter} />
+      <Route path="/contact-center/agents" component={ContactCenter} />
+      <Route path="/contact-center/quality" component={ContactCenter} />
+      
+      {/* Mobile Banking Submenu */}
+      <Route path="/mobile-banking/dashboard" component={MobileBanking} />
+      <Route path="/mobile-banking/transactions" component={MobileBanking} />
+      <Route path="/mobile-banking/users" component={MobileBanking} />
+      <Route path="/mobile-banking/performance" component={MobileBanking} />
+      
+      {/* IVR Analytics Submenu */}
+      <Route path="/ivr-analytics/dashboard" component={IvrAnalytics} />
+      <Route path="/ivr-analytics/flows" component={IvrAnalytics} />
+      <Route path="/ivr-analytics/performance" component={IvrAnalytics} />
+      <Route path="/ivr-analytics/optimization" component={IvrAnalytics} />
+      
+      {/* Backend Submenu - Ready for your prompts */}
+      <Route path="/backend/overview" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Backend Overview</h1><p className="text-gray-600">Backend infrastructure management - Ready for your specifications!</p></div>} />
+      <Route path="/backend/services" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Microservices</h1><p className="text-gray-600">Microservices architecture - Ready for your specifications!</p></div>} />
+      <Route path="/backend/apis" component={() => <div className="p-6"><h1 className="text-2xl font-bold">API Management</h1><p className="text-gray-600">API gateway and management - Ready for your specifications!</p></div>} />
+      <Route path="/backend/infrastructure" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Infrastructure</h1><p className="text-gray-600">Infrastructure monitoring - Ready for your specifications!</p></div>} />
+      
+      {/* Intelligence Submenu - Ready for your prompts */}
+      <Route path="/intelligence/overview" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Intelligence Hub</h1><p className="text-gray-600">AI Intelligence center - Ready for your specifications!</p></div>} />
+      <Route path="/intelligence/models" component={() => <div className="p-6"><h1 className="text-2xl font-bold">AI Models</h1><p className="text-gray-600">AI model management - Ready for your specifications!</p></div>} />
+      <Route path="/intelligence/insights" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Business Insights</h1><p className="text-gray-600">Business intelligence insights - Ready for your specifications!</p></div>} />
+      <Route path="/intelligence/predictions" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Predictive Analytics</h1><p className="text-gray-600">Predictive analytics engine - Ready for your specifications!</p></div>} />
       <Route path="/admin/users" component={UserManagement} />
       <Route path="/admin/teams" component={TeamManagement} />
       <Route path="/admin/roles" component={RoleManagement} />

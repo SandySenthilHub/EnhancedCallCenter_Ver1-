@@ -31,7 +31,8 @@ import {
   Briefcase,
   Target,
   TrendingUp,
-  Crown
+  Crown,
+  Server
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
@@ -57,17 +58,69 @@ const Sidebar: React.FC = () => {
   const menuSections = [
     {
       id: 'analytics',
-      title: 'Banking Analytics',
+      title: 'Analytics',
       icon: TrendingUp,
       items: [
         { path: '/', label: 'Dashboard Overview', icon: BarChartBig },
-        { path: '/contact-center', label: 'Contact Center', icon: Phone },
-        { path: '/mobile-banking', label: 'Mobile Banking', icon: Smartphone },
-        { path: '/ivr-analytics', label: 'IVR Analytics', icon: Network },
-        { path: '/cognitive-services', label: 'Cognitive Services', icon: Brain },
         { path: '/kpi-dashboard', label: 'KPI Dashboard', icon: LayoutGrid },
         { path: '/chart-dashboard', label: 'Chart Dashboard', icon: LineChart },
+        { path: '/cognitive-services', label: 'Cognitive Services', icon: Brain },
         { path: '/ai-playbook', label: 'AI/ML Playbook', icon: Cpu },
+      ]
+    },
+    {
+      id: 'contact-center',
+      title: 'Contact Center',
+      icon: Phone,
+      items: [
+        { path: '/contact-center/dashboard', label: 'Contact Center Dashboard', icon: BarChartBig },
+        { path: '/contact-center/analytics', label: 'Call Analytics', icon: Phone },
+        { path: '/contact-center/agents', label: 'Agent Performance', icon: Users },
+        { path: '/contact-center/quality', label: 'Quality Management', icon: Shield },
+      ]
+    },
+    {
+      id: 'mobile-banking',
+      title: 'Mobile Banking',
+      icon: Smartphone,
+      items: [
+        { path: '/mobile-banking/dashboard', label: 'Mobile Dashboard', icon: BarChartBig },
+        { path: '/mobile-banking/transactions', label: 'Transaction Analytics', icon: CreditCard },
+        { path: '/mobile-banking/users', label: 'User Behavior', icon: Users },
+        { path: '/mobile-banking/performance', label: 'App Performance', icon: TrendingUp },
+      ]
+    },
+    {
+      id: 'ivr-analytics',
+      title: 'IVR Analytics',
+      icon: Network,
+      items: [
+        { path: '/ivr-analytics/dashboard', label: 'IVR Dashboard', icon: BarChartBig },
+        { path: '/ivr-analytics/flows', label: 'Call Flow Analysis', icon: Workflow },
+        { path: '/ivr-analytics/performance', label: 'Performance Metrics', icon: Activity },
+        { path: '/ivr-analytics/optimization', label: 'Flow Optimization', icon: Target },
+      ]
+    },
+    {
+      id: 'backend',
+      title: 'Back End',
+      icon: Server,
+      items: [
+        { path: '/backend/overview', label: 'Backend Overview', icon: Database },
+        { path: '/backend/services', label: 'Microservices', icon: Server },
+        { path: '/backend/apis', label: 'API Management', icon: Globe },
+        { path: '/backend/infrastructure', label: 'Infrastructure', icon: Building },
+      ]
+    },
+    {
+      id: 'intelligence',
+      title: 'Intelligence',
+      icon: Brain,
+      items: [
+        { path: '/intelligence/overview', label: 'Intelligence Hub', icon: Brain },
+        { path: '/intelligence/models', label: 'AI Models', icon: Cpu },
+        { path: '/intelligence/insights', label: 'Business Insights', icon: TrendingUp },
+        { path: '/intelligence/predictions', label: 'Predictive Analytics', icon: Target },
       ]
     },
     {
