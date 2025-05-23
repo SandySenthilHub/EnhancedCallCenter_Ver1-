@@ -43,7 +43,7 @@ import SystemInfrastructure from "./pages/backend/SystemInfrastructure";
 import TranscriptionHub from "./pages/intelligence/TranscriptionHub";
 import AIAnalysisSuite from "./pages/intelligence/AIAnalysisSuite";
 import IntelligenceDashboard from "./pages/intelligence/IntelligenceDashboard";
-import ConfigurationCenter from "./pages/ConfigurationCenter";
+import ConfigurationCenter from "./pages/intelligence/ConfigurationCenter";
 
 function Router() {
   return (
