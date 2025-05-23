@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Server,
   Activity,
@@ -25,28 +28,106 @@ import {
   Monitor,
   Zap,
   BarChart3,
-  Globe
+  Globe,
+  Mic,
+  MicOff,
+  Play,
+  Stop,
+  Upload,
+  Download,
+  FileAudio,
+  User,
+  UserPlus,
+  VolumeX,
+  Volume2,
+  FileText,
+  Search,
+  Filter,
+  RotateCcw,
+  Save,
+  Trash2,
+  Edit
 } from 'lucide-react';
 
-interface SystemMetrics {
-  cpu: number;
-  memory: number;
-  disk: number;
-  network: number;
-  uptime: string;
-  status: 'healthy' | 'warning' | 'critical';
+// GoodContact Voice Authentication Interfaces
+interface VoiceProfile {
+  id: string;
+  userId: string;
+  userName: string;
+  voicePrintId: string;
+  enrollmentDate: string;
+  isActive: boolean;
+  confidence: number;
+  sampleCount: number;
+  lastUsed: string;
 }
 
-interface IntelService {
+interface VoiceEnrollment {
+  userId: string;
+  userName: string;
+  phoneNumber: string;
+  email: string;
+  promptText: string;
+  audioFile?: File;
+  isRecording: boolean;
+  recordingDuration: number;
+  enrollmentStatus: 'pending' | 'recording' | 'processing' | 'completed' | 'failed';
+}
+
+interface VoiceAuthentication {
+  callId: string;
+  customerPhone: string;
+  audioFile?: File;
+  isRecording: boolean;
+  recordingDuration: number;
+  authenticationStatus: 'pending' | 'recording' | 'processing' | 'authenticated' | 'failed' | 'fraud_detected';
+  confidence: number;
+  identifiedUser?: string;
+  riskScore: number;
+}
+
+interface TranscriptionResult {
   id: string;
-  name: string;
-  type: 'AI' | 'Analytics' | 'Processing' | 'Database';
-  status: 'running' | 'stopped' | 'error' | 'maintenance';
-  cpu: number;
-  memory: number;
-  responseTime: number;
-  requests: number;
-  lastUpdate: string;
+  callId: string;
+  transcript: string;
+  confidence: number;
+  language: string;
+  duration: number;
+  processedAt: string;
+  speakers: number;
+  sentiment: {
+    overall: number;
+    positive: number;
+    negative: number;
+    neutral: number;
+  };
+  keywords: string[];
+  summary: string;
+}
+
+interface CallRecording {
+  id: string;
+  callId: string;
+  fileName: string;
+  fileSize: number;
+  duration: number;
+  recordingDate: string;
+  transcriptionId?: string;
+  isProcessed: boolean;
+  azureUrl?: string;
+  awsUrl?: string;
+}
+
+interface FraudAlert {
+  id: string;
+  userId: string;
+  callId: string;
+  riskScore: number;
+  fraudType: 'voice_spoofing' | 'multiple_attempts' | 'unusual_pattern' | 'blacklist';
+  description: string;
+  timestamp: string;
+  status: 'active' | 'investigating' | 'resolved' | 'false_positive';
+  investigator?: string;
 }
 
 const IntelDelta: React.FC = () => {
