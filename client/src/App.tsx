@@ -31,6 +31,18 @@ import CountryManagement from "./pages/system/CountryManagement";
 import LanguageManagement from "./pages/system/LanguageManagement";
 import SystemMonitoring from "./pages/system/SystemMonitoring";
 import AuditLogs from "./pages/system/AuditLogs";
+
+// Backend Infrastructure Components
+import DataSourceConnectors from "./pages/backend/DataSourceConnectors";
+import FileProcessingPipeline from "./pages/backend/FileProcessingPipeline";
+import DatabaseIntegration from "./pages/backend/DatabaseIntegration";
+import SystemInfrastructure from "./pages/backend/SystemInfrastructure";
+
+// Intelligence Components
+import TranscriptionHub from "./pages/intelligence/TranscriptionHub";
+import AIAnalysisSuite from "./pages/intelligence/AIAnalysisSuite";
+import IntelligenceDashboard from "./pages/intelligence/IntelligenceDashboard";
+import ConfigurationCenter from "./pages/intelligence/ConfigurationCenter";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -50,6 +62,18 @@ function Router() {
       <Route path="/contact-center/quality" component={ContactCenter} />
       <Route path="/contact-center/backend" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Contact Center - Back End</h1><p className="text-gray-600">Contact center backend infrastructure - Ready for your specifications!</p></div>} />
       <Route path="/contact-center/intelligence" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Contact Center - Intelligence</h1><p className="text-gray-600">Contact center AI intelligence - Ready for your specifications!</p></div>} />
+      
+      {/* Backend Infrastructure Pages */}
+      <Route path="/backend/data-sources" component={DataSourceConnectors} />
+      <Route path="/backend/file-processing" component={FileProcessingPipeline} />
+      <Route path="/backend/database" component={DatabaseIntegration} />
+      <Route path="/backend/infrastructure" component={SystemInfrastructure} />
+      
+      {/* Intelligence Pages */}
+      <Route path="/intelligence/transcription" component={TranscriptionHub} />
+      <Route path="/intelligence/analysis" component={AIAnalysisSuite} />
+      <Route path="/intelligence/dashboard" component={IntelligenceDashboard} />
+      <Route path="/intelligence/configuration" component={ConfigurationCenter} />
       
       {/* Mobile Banking Submenu */}
       <Route path="/mobile-banking/dashboard" component={MobileBanking} />
