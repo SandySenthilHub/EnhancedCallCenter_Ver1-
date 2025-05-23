@@ -45,7 +45,6 @@ import IntelligenceDashboard from "./pages/intelligence/IntelligenceDashboard";
 import ConfigurationCenter from "./pages/intelligence/ConfigurationCenter";
 import ContactCenterBackend from "./pages/ContactCenterBackend";
 import ContactCenterIntelligence from "./pages/ContactCenterIntelligence";
-import IntelDelta from "./pages/IntelDelta";
 import AgentPerformance from "./pages/AgentPerformance";
 import QualityManagement from "./pages/QualityManagement";
 import NotFound from "@/pages/not-found";
@@ -67,7 +66,6 @@ function Router() {
       <Route path="/contact-center/quality" component={QualityManagement} />
       <Route path="/contact-center/backend" component={ContactCenterBackend} />
       <Route path="/contact-center/intelligence" component={ContactCenterIntelligence} />
-      <Route path="/contact-center/intel-delta" component={IntelDelta} />
       
       {/* Backend Infrastructure Pages */}
       <Route path="/backend/data-sources" component={DataSourceConnectors} />
