@@ -27,6 +27,10 @@ import TransactionCenter from "./pages/admin/TransactionCenter";
 import CompanyManagement from "./pages/admin/CompanyManagement";
 import WorkflowInbox from "./pages/system/WorkflowInbox";
 import CurrencyManagement from "./pages/system/CurrencyManagement";
+import CountryManagement from "./pages/system/CountryManagement";
+import LanguageManagement from "./pages/system/LanguageManagement";
+import SystemMonitoring from "./pages/system/SystemMonitoring";
+import AuditLogs from "./pages/system/AuditLogs";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -49,11 +53,11 @@ function Router() {
       <Route path="/admin/workflows" component={WorkflowManagement} />
       <Route path="/admin/companies" component={CompanyManagement} />
       <Route path="/admin/transactions" component={TransactionCenter} />
-      <Route path="/system/countries" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Countries & Regions</h1><p className="text-gray-600">Global geographic data management - Framework Foundation Ready!</p></div>} />
+      <Route path="/system/countries" component={CountryManagement} />
       <Route path="/system/currencies" component={CurrencyManagement} />
-      <Route path="/system/languages" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Language Management</h1><p className="text-gray-600">Internationalization support - Framework Foundation Ready!</p></div>} />
-      <Route path="/system/monitoring" component={() => <div className="p-6"><h1 className="text-2xl font-bold">System Health</h1><p className="text-gray-600">Comprehensive system monitoring - Framework Foundation Ready!</p></div>} />
-      <Route path="/system/audit" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Audit Logs</h1><p className="text-gray-600">Complete audit trail system - Framework Foundation Ready!</p></div>} />
+      <Route path="/system/languages" component={LanguageManagement} />
+      <Route path="/system/monitoring" component={SystemMonitoring} />
+      <Route path="/system/audit" component={AuditLogs} />
       <Route path="/system/alerts" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Alert Management</h1><p className="text-gray-600">System alert configuration - Framework Foundation Ready!</p></div>} />
       <Route path="/system/inbox" component={WorkflowInbox} />
       <Route path="/settings" component={Settings} />
