@@ -36,7 +36,7 @@ import SystemMonitoring from "./pages/system/SystemMonitoring";
 import AuditLogs from "./pages/system/AuditLogs";
 import ContactCenterBackend from "./pages/ContactCenterBackend";
 import ContactCenterIntelligence from "./pages/ContactCenterIntelligence";
-import DataSourceConnectors from "./pages/DataSourceConnectors";
+import DataSourceConnectors from "./pages/backend/DataSourceConnectors";
 import FileProcessingPipeline from "./pages/FileProcessingPipeline";
 import DatabaseIntegration from "./pages/DatabaseIntegration";
 import SystemInfrastructure from "./pages/SystemInfrastructure";
