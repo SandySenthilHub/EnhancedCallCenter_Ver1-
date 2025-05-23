@@ -1,11 +1,4 @@
-` tags.
 
-```python
-# The provided changes appear to be for a different routing library (react-router-dom) than the one used in the original code (wouter).  I will adapt the changes to work with wouter, focusing on making the /kpi-dashboard route work.
-```
-
-```
-<replit_final_file>
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -39,22 +32,6 @@ import CountryManagement from "./pages/system/CountryManagement";
 import LanguageManagement from "./pages/system/LanguageManagement";
 import SystemMonitoring from "./pages/system/SystemMonitoring";
 import AuditLogs from "./pages/system/AuditLogs";
-
-// Backend Infrastructure Components
-import DataSourceConnectors from "./pages/backend/DataSourceConnectors";
-import FileProcessingPipeline from "./pages/backend/FileProcessingPipeline";
-import DatabaseIntegration from "./pages/backend/DatabaseIntegration";
-import SystemInfrastructure from "./pages/backend/SystemInfrastructure";
-
-// Intelligence Components
-import TranscriptionHub from "./pages/intelligence/TranscriptionHub";
-import AIAnalysisSuite from "./pages/intelligence/AIAnalysisSuite";
-import IntelligenceDashboard from "./pages/intelligence/IntelligenceDashboard";
-import ConfigurationCenter from "./pages/intelligence/ConfigurationCenter";
-import ContactCenterBackend from "./pages/ContactCenterBackend";
-import ContactCenterIntelligence from "./pages/ContactCenterIntelligence";
-import AgentPerformance from "./pages/AgentPerformance";
-import QualityManagement from "./pages/QualityManagement";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -66,39 +43,27 @@ function Router() {
       <Route path="/chart-dashboard" component={SimpleChartView} />
       <Route path="/cognitive-services" component={CognitiveServices} />
       <Route path="/ai-playbook" component={AIPlaybook} />
-
-      {/* Contact Center Submenu */}
       <Route path="/contact-center/dashboard" component={ContactCenter} />
       <Route path="/contact-center/analytics" component={ContactCenter} />
-      <Route path="/contact-center/agents" component={AgentPerformance} />
       <Route path="/contact-center/quality" component={QualityManagement} />
       <Route path="/contact-center/backend" component={ContactCenterBackend} />
       <Route path="/contact-center/intelligence" component={ContactCenterIntelligence} />
-
-      {/* Backend Infrastructure Pages */}
       <Route path="/backend/data-sources" component={DataSourceConnectors} />
       <Route path="/backend/file-processing" component={FileProcessingPipeline} />
       <Route path="/backend/database" component={DatabaseIntegration} />
       <Route path="/backend/infrastructure" component={SystemInfrastructure} />
-
-      {/* Intelligence Pages */}
       <Route path="/intelligence/transcription" component={TranscriptionHub} />
       <Route path="/intelligence/analysis" component={AIAnalysisSuite} />
       <Route path="/intelligence/dashboard" component={IntelligenceDashboard} />
       <Route path="/intelligence/configuration" component={ConfigurationCenter} />
-
-      {/* Mobile Banking Submenu */}
       <Route path="/mobile-banking/dashboard" component={MobileBanking} />
       <Route path="/mobile-banking/transactions" component={MobileBanking} />
       <Route path="/mobile-banking/users" component={MobileBanking} />
       <Route path="/mobile-banking/performance" component={MobileBanking} />
-
-      {/* IVR Analytics Submenu */}
       <Route path="/ivr-analytics/dashboard" component={IvrAnalytics} />
       <Route path="/ivr-analytics/flows" component={IvrAnalytics} />
       <Route path="/ivr-analytics/performance" component={IvrAnalytics} />
       <Route path="/ivr-analytics/optimization" component={IvrAnalytics} />
-
       <Route path="/admin/users" component={UserManagement} />
       <Route path="/admin/teams" component={TeamManagement} />
       <Route path="/admin/roles" component={RoleManagement} />
