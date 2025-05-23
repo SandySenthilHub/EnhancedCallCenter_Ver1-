@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -9,9 +9,29 @@ import {
   Brain,
   Settings,
   ChevronDown,
+  ChevronRight,
   LayoutGrid,
   LineChart,
-  Cpu
+  Cpu,
+  Users,
+  Building2,
+  Shield,
+  Globe,
+  CreditCard,
+  Activity,
+  FileText,
+  UserCheck,
+  MapPin,
+  Languages,
+  AlertTriangle,
+  Database,
+  Workflow,
+  UserPlus,
+  Building,
+  Briefcase,
+  Target,
+  TrendingUp,
+  Crown
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
