@@ -79,6 +79,7 @@ const Sidebar: React.FC = () => {
         { path: '/contact-center/quality', label: 'Quality Management', icon: Shield },
         { path: '/contact-center/backend', label: 'Back End', icon: Database },
         { path: '/contact-center/intelligence', label: 'Intelligence', icon: Brain },
+        { path: '/contact-center/intel-delta', label: 'Intel Delta', icon: Server },
       ]
     },
     {
