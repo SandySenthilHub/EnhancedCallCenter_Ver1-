@@ -60,8 +60,8 @@ function Router() {
       <Route path="/contact-center/analytics" component={ContactCenter} />
       <Route path="/contact-center/agents" component={ContactCenter} />
       <Route path="/contact-center/quality" component={ContactCenter} />
-      <Route path="/contact-center/backend" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Contact Center - Back End</h1><p className="text-gray-600">Contact center backend infrastructure - Ready for your specifications!</p></div>} />
-      <Route path="/contact-center/intelligence" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Contact Center - Intelligence</h1><p className="text-gray-600">Contact center AI intelligence - Ready for your specifications!</p></div>} />
+      <Route path="/contact-center/backend" component={DataSourceConnectors} />
+      <Route path="/contact-center/intelligence" component={IntelligenceDashboard} />
       
       {/* Backend Infrastructure Pages */}
       <Route path="/backend/data-sources" component={DataSourceConnectors} />
