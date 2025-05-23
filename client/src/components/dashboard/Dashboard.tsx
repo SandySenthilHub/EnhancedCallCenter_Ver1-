@@ -1,7 +1,4 @@
-` tags. I will pay close attention to indentation, structure, and completeness, and avoid using any forbidden words.
 
-```
-<replit_final_file>
 import React, { useState } from 'react';
 import { useDashboard } from '@/contexts/DashboardContext';
 import { Button } from '@/components/ui/button';
@@ -42,7 +39,7 @@ const Dashboard: React.FC<DashboardProps> = ({ pageType }) => {
     }
   };
 
-  // Example KPI data
+  // KPI data with chart configuration
   const kpiData = [
     {
       id: 'aht',
@@ -69,14 +66,7 @@ const Dashboard: React.FC<DashboardProps> = ({ pageType }) => {
       {/* Dashboard Controls */}
       <div className="mb-4 flex items-center justify-between bg-muted/30 p-3 rounded-md border">
         <div className="flex-1">
-          <h2 className="text-lg font-medium">
-            Analytics Dashboard
-            {isEditMode && (
-              <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                Edit Mode
-              </span>
-            )}
-          </h2>
+          <h2 className="text-lg font-medium">Analytics Dashboard</h2>
         </div>
 
         <div className="flex items-center space-x-4">
