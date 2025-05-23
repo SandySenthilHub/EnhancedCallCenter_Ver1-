@@ -78,6 +78,8 @@ interface SystemHealth {
 
 const ContactCenterBackend: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState('realtime');
+  const [selectedQueue, setSelectedQueue] = useState<string>('');
+  const [autoRefresh, setAutoRefresh] = useState(true);
 
   // Real-time call center metrics
   const callMetrics: CallMetrics = {
@@ -317,10 +319,14 @@ const ContactCenterBackend: React.FC = () => {
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="realtime">Real-time Dashboard</TabsTrigger>
-          <TabsTrigger value="agents">Agent Status</TabsTrigger>
-          <TabsTrigger value="queues">Call Queues</TabsTrigger>
-          <TabsTrigger value="system">System Health</TabsTrigger>
+          <TabsTrigger value="realtime">Live Operations</TabsTrigger>
+          <TabsTrigger value="agents">Agent Management</TabsTrigger>
+          <TabsTrigger value="queues">Queue Control</TabsTrigger>
+          <TabsTrigger value="system">Infrastructure</TabsTrigger>
+          <TabsTrigger value="calls">Active Calls</TabsTrigger>
+          <TabsTrigger value="routing">Call Routing</TabsTrigger>
+          <TabsTrigger value="recording">Recording Hub</TabsTrigger>
+          <TabsTrigger value="reports">Live Reports</TabsTrigger>
         </TabsList>
 
         <TabsContent value="realtime" className="space-y-4">
@@ -588,6 +594,324 @@ const ContactCenterBackend: React.FC = () => {
                   ))}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="calls" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Active Call Management</CardTitle>
+              <CardDescription>Real-time monitoring and control of active calls</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Filter className="h-4 w-4 mr-2" />
+                      Filter Calls
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Volume2 className="h-4 w-4 mr-2" />
+                      Monitor All
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Auto-refresh:</span>
+                    <Button
+                      variant={autoRefresh ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setAutoRefresh(!autoRefresh)}
+                    >
+                      <RefreshCw className={`h-4 w-4 ${autoRefresh ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </div>
+                </div>
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Call ID</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Agent</TableHead>
+                      <TableHead>Queue</TableHead>
+                      <TableHead>Duration</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell className="font-mono">#CALL-001</TableCell>
+                      <TableCell>+1-555-0123</TableCell>
+                      <TableCell>Sarah Johnson</TableCell>
+                      <TableCell>Technical Support</TableCell>
+                      <TableCell>02:34</TableCell>
+                      <TableCell>
+                        <Badge variant="default">Connected</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-1">
+                          <Button variant="ghost" size="sm">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Volume2 className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-mono">#CALL-002</TableCell>
+                      <TableCell>+1-555-0124</TableCell>
+                      <TableCell>Michael Chen</TableCell>
+                      <TableCell>Billing Support</TableCell>
+                      <TableCell>01:47</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">On Hold</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-1">
+                          <Button variant="ghost" size="sm">
+                            <Play className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Volume2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="routing" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Intelligent Call Routing</CardTitle>
+              <CardDescription>Configure and monitor call distribution strategies</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Routing Rules</h4>
+                  <div className="space-y-3">
+                    <div className="border rounded p-3">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">VIP Customers</span>
+                        <Badge variant="default">Active</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Route to senior agents immediately
+                      </p>
+                    </div>
+                    <div className="border rounded p-3">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Technical Issues</span>
+                        <Badge variant="default">Active</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Direct to technical support queue
+                      </p>
+                    </div>
+                    <div className="border rounded p-3">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">After Hours</span>
+                        <Badge variant="secondary">Scheduled</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Route to voicemail or callback queue
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Distribution Metrics</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span>Round Robin</span>
+                      <span className="font-semibold">45%</span>
+                    </div>
+                    <Progress value={45} />
+                    
+                    <div className="flex justify-between items-center">
+                      <span>Skill-Based</span>
+                      <span className="font-semibold">35%</span>
+                    </div>
+                    <Progress value={35} />
+                    
+                    <div className="flex justify-between items-center">
+                      <span>Longest Idle</span>
+                      <span className="font-semibold">20%</span>
+                    </div>
+                    <Progress value={20} />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="recording" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Call Recording Management</CardTitle>
+              <CardDescription>Monitor recording status and manage call archives</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="text-center p-4 border rounded">
+                  <p className="text-2xl font-bold text-green-600">98.5%</p>
+                  <p className="text-sm text-muted-foreground">Recording Success Rate</p>
+                </div>
+                <div className="text-center p-4 border rounded">
+                  <p className="text-2xl font-bold text-blue-600">247</p>
+                  <p className="text-sm text-muted-foreground">Recordings Today</p>
+                </div>
+                <div className="text-center p-4 border rounded">
+                  <p className="text-2xl font-bold text-purple-600">847 GB</p>
+                  <p className="text-sm text-muted-foreground">Storage Used</p>
+                </div>
+              </div>
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Recording ID</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Agent</TableHead>
+                    <TableHead>Duration</TableHead>
+                    <TableHead>Date/Time</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="font-mono">REC-001-2025</TableCell>
+                    <TableCell>John Anderson</TableCell>
+                    <TableCell>Sarah Johnson</TableCell>
+                    <TableCell>04:32</TableCell>
+                    <TableCell>2025-05-23 14:30</TableCell>
+                    <TableCell>
+                      <Badge variant="default">Completed</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-1">
+                        <Button variant="ghost" size="sm">
+                          <Play className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-mono">REC-002-2025</TableCell>
+                    <TableCell>Lisa Rodriguez</TableCell>
+                    <TableCell>Michael Chen</TableCell>
+                    <TableCell>03:15</TableCell>
+                    <TableCell>2025-05-23 13:45</TableCell>
+                    <TableCell>
+                      <Badge variant="default">Completed</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-1">
+                        <Button variant="ghost" size="sm">
+                          <Play className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Real-time Reporting Dashboard</CardTitle>
+              <CardDescription>Live performance metrics and operational insights</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="text-center p-4 border rounded">
+                  <p className="text-2xl font-bold text-blue-600">1,847</p>
+                  <p className="text-sm text-muted-foreground">Total Calls Today</p>
+                  <p className="text-xs text-green-600">↑ 12% vs yesterday</p>
+                </div>
+                <div className="text-center p-4 border rounded">
+                  <p className="text-2xl font-bold text-green-600">87.3%</p>
+                  <p className="text-sm text-muted-foreground">Service Level</p>
+                  <p className="text-xs text-green-600">↑ 3.2% vs target</p>
+                </div>
+                <div className="text-center p-4 border rounded">
+                  <p className="text-2xl font-bold text-purple-600">4:27</p>
+                  <p className="text-sm text-muted-foreground">Avg Handle Time</p>
+                  <p className="text-xs text-red-600">↑ 15s vs target</p>
+                </div>
+                <div className="text-center p-4 border rounded">
+                  <p className="text-2xl font-bold text-orange-600">5.8%</p>
+                  <p className="text-sm text-muted-foreground">Abandon Rate</p>
+                  <p className="text-xs text-green-600">↓ 1.2% vs yesterday</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Hourly Call Volume</h4>
+                  <div className="space-y-2">
+                    {[
+                      { hour: '08:00', calls: 145, percentage: 85 },
+                      { hour: '09:00', calls: 167, percentage: 98 },
+                      { hour: '10:00', calls: 189, percentage: 100 },
+                      { hour: '11:00', calls: 156, percentage: 92 },
+                      { hour: '12:00', calls: 134, percentage: 79 }
+                    ].map((data, index) => (
+                      <div key={index} className="flex items-center space-x-3">
+                        <span className="text-sm w-12">{data.hour}</span>
+                        <Progress value={data.percentage} className="flex-1" />
+                        <span className="text-sm font-semibold w-12">{data.calls}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Queue Performance</h4>
+                  <div className="space-y-3">
+                    {callQueues.map((queue) => (
+                      <div key={queue.id} className="border rounded p-3">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-medium">{queue.name}</span>
+                          <Badge variant={getStatusBadge(queue.status)}>
+                            {queue.serviceLevel}%
+                          </Badge>
+                        </div>
+                        <Progress value={queue.serviceLevel} />
+                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                          <span>{queue.waitingCalls} waiting</span>
+                          <span>{formatTime(queue.avgWaitTime)} avg wait</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
