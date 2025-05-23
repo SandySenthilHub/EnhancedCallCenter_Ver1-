@@ -609,7 +609,7 @@ const ContactCenterBackend: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm">
-                      <Filter className="h-4 w-4 mr-2" />
+                      <Search className="h-4 w-4 mr-2" />
                       Filter Calls
                     </Button>
                     <Button variant="outline" size="sm">
