@@ -18,6 +18,9 @@ import KpiDashboard from "./pages/KpiDashboard";
 import SimpleChartView from "./pages/SimpleChartView";
 import AIPlaybook from "./pages/AIPlaybook";
 import UserManagement from "./pages/admin/UserManagement";
+import TeamManagement from "./pages/admin/TeamManagement";
+import RoleManagement from "./pages/admin/RoleManagement";
+import TenantManagement from "./pages/admin/TenantManagement";
 import EntityFramework from "./pages/admin/EntityFramework";
 import WorkflowManagement from "./pages/admin/WorkflowManagement";
 import TransactionCenter from "./pages/admin/TransactionCenter";
@@ -39,9 +42,9 @@ function Router() {
       <Route path="/chart-dashboard" component={SimpleChartView} />
       <Route path="/ai-playbook" component={AIPlaybook} />
       <Route path="/admin/users" component={UserManagement} />
-      <Route path="/admin/teams" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Team Management</h1><p className="text-gray-600">Manage teams and team memberships - Framework Foundation Ready!</p></div>} />
-      <Route path="/admin/roles" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Roles & Permissions</h1><p className="text-gray-600">Configure role-based access control - Framework Foundation Ready!</p></div>} />
-      <Route path="/admin/tenants" component={() => <div className="p-6"><h1 className="text-2xl font-bold">Tenant Management</h1><p className="text-gray-600">Manage multi-tenant organizations - Framework Foundation Ready!</p></div>} />
+      <Route path="/admin/teams" component={TeamManagement} />
+      <Route path="/admin/roles" component={RoleManagement} />
+      <Route path="/admin/tenants" component={TenantManagement} />
       <Route path="/admin/entities" component={EntityFramework} />
       <Route path="/admin/workflows" component={WorkflowManagement} />
       <Route path="/admin/companies" component={CompanyManagement} />
