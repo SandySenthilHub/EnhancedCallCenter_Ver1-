@@ -30,7 +30,9 @@ import {
   Volume2,
   Calendar,
   FileText,
-  Shield
+  Shield,
+  Search,
+  Download
 } from 'lucide-react';
 
 interface CallMetrics {
