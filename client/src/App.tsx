@@ -37,7 +37,7 @@ import AuditLogs from "./pages/system/AuditLogs";
 import ContactCenterBackend from "./pages/ContactCenterBackend";
 import ContactCenterIntelligence from "./pages/ContactCenterIntelligence";
 import DataSourceConnectors from "./pages/backend/DataSourceConnectors";
-import FileProcessingPipeline from "./pages/FileProcessingPipeline";
+import FileProcessingPipeline from "./pages/backend/FileProcessingPipeline";
 import DatabaseIntegration from "./pages/DatabaseIntegration";
 import SystemInfrastructure from "./pages/SystemInfrastructure";
 import TranscriptionHub from "./pages/TranscriptionHub";
