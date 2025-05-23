@@ -43,6 +43,8 @@ import TranscriptionHub from "./pages/intelligence/TranscriptionHub";
 import AIAnalysisSuite from "./pages/intelligence/AIAnalysisSuite";
 import IntelligenceDashboard from "./pages/intelligence/IntelligenceDashboard";
 import ConfigurationCenter from "./pages/intelligence/ConfigurationCenter";
+import ContactCenterBackend from "./pages/ContactCenterBackend";
+import ContactCenterIntelligence from "./pages/ContactCenterIntelligence";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -60,8 +62,8 @@ function Router() {
       <Route path="/contact-center/analytics" component={ContactCenter} />
       <Route path="/contact-center/agents" component={ContactCenter} />
       <Route path="/contact-center/quality" component={ContactCenter} />
-      <Route path="/contact-center/backend" component={DataSourceConnectors} />
-      <Route path="/contact-center/intelligence" component={IntelligenceDashboard} />
+      <Route path="/contact-center/backend" component={ContactCenterBackend} />
+      <Route path="/contact-center/intelligence" component={ContactCenterIntelligence} />
       
       {/* Backend Infrastructure Pages */}
       <Route path="/backend/data-sources" component={DataSourceConnectors} />
