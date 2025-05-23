@@ -45,6 +45,8 @@ import IntelligenceDashboard from "./pages/intelligence/IntelligenceDashboard";
 import ConfigurationCenter from "./pages/intelligence/ConfigurationCenter";
 import ContactCenterBackend from "./pages/ContactCenterBackend";
 import ContactCenterIntelligence from "./pages/ContactCenterIntelligence";
+import AgentPerformance from "./pages/AgentPerformance";
+import QualityManagement from "./pages/QualityManagement";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -60,8 +62,8 @@ function Router() {
       {/* Contact Center Submenu */}
       <Route path="/contact-center/dashboard" component={ContactCenter} />
       <Route path="/contact-center/analytics" component={ContactCenter} />
-      <Route path="/contact-center/agents" component={ContactCenter} />
-      <Route path="/contact-center/quality" component={ContactCenter} />
+      <Route path="/contact-center/agents" component={AgentPerformance} />
+      <Route path="/contact-center/quality" component={QualityManagement} />
       <Route path="/contact-center/backend" component={ContactCenterBackend} />
       <Route path="/contact-center/intelligence" component={ContactCenterIntelligence} />
       
