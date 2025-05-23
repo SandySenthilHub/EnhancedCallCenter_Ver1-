@@ -67,6 +67,7 @@ function Router() {
       <Route path="/contact-center/quality" component={QualityManagement} />
       <Route path="/contact-center/backend" component={ContactCenterBackend} />
       <Route path="/contact-center/intelligence" component={ContactCenterIntelligence} />
+      <Route path="/contact-center/intel-delta" component={IntelDelta} />
       
       {/* Backend Infrastructure Pages */}
       <Route path="/backend/data-sources" component={DataSourceConnectors} />
