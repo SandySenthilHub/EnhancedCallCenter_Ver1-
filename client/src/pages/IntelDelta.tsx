@@ -1247,9 +1247,8 @@ const IntelDelta: React.FC = () => {
       </Tabs>
     </div>
   );
-};
-    status: 'healthy'
-  };
+status: 'healthy'
+  }
 
   // Intel Delta services
   const intelServices: IntelService[] = [
