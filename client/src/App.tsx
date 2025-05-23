@@ -1,4 +1,3 @@
-
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -18,6 +17,9 @@ import Settings from "./pages/Settings";
 import KpiDashboard from "./pages/KpiDashboard";
 import SimpleChartView from "./pages/SimpleChartView";
 import AIPlaybook from "./pages/AIPlaybook";
+import QualityManagement from "./pages/QualityManagement";
+import NotFound from "@/pages/not-found";
+import { Loader2 } from "lucide-react";
 import UserManagement from "./pages/admin/UserManagement";
 import TeamManagement from "./pages/admin/TeamManagement";
 import RoleManagement from "./pages/admin/RoleManagement";
@@ -32,8 +34,16 @@ import CountryManagement from "./pages/system/CountryManagement";
 import LanguageManagement from "./pages/system/LanguageManagement";
 import SystemMonitoring from "./pages/system/SystemMonitoring";
 import AuditLogs from "./pages/system/AuditLogs";
-import NotFound from "@/pages/not-found";
-import { Loader2 } from "lucide-react";
+import ContactCenterBackend from "./pages/ContactCenterBackend";
+import ContactCenterIntelligence from "./pages/ContactCenterIntelligence";
+import DataSourceConnectors from "./pages/DataSourceConnectors";
+import FileProcessingPipeline from "./pages/FileProcessingPipeline";
+import DatabaseIntegration from "./pages/DatabaseIntegration";
+import SystemInfrastructure from "./pages/SystemInfrastructure";
+import TranscriptionHub from "./pages/TranscriptionHub";
+import AIAnalysisSuite from "./pages/AIAnalysisSuite";
+import IntelligenceDashboard from "./pages/IntelligenceDashboard";
+import ConfigurationCenter from "./pages/ConfigurationCenter";
 
 function Router() {
   return (
